@@ -6,9 +6,9 @@
 ![Version](https://img.shields.io/badge/version-0.1.0--beta-orange)
 ![Build](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)
 
-A production-quality .NET 8 WPF desktop application for tracking job applications, syncing to Obsidian, and getting AI-powered CV analysis.
+A production-quality .NET 8 WPF desktop application for tracking job applications with Obsidian vault sync.
 
-> **Beta v0.1.0** — fully functional with Companies, Contacts, Skills management, Kanban board view, DPAPI-encrypted API keys, and a full test suite.
+> **Beta v0.1.0** — fully functional with Companies, Contacts, Skills management, Kanban board view, PDF extraction, Obsidian sync, and a full test suite.
 
 ---
 
@@ -22,14 +22,16 @@ A production-quality .NET 8 WPF desktop application for tracking job application
 
 ---
 
-## What's New in Beta (v0.1.0)
+## Features (v0.1.0)
 
 - **Companies / Contacts / Skills** — full CRUD pages with inline edit panels
-- **Kanban board** — toggle between table and board view on the Dashboard
-- **Response rate & Offer rate** stat cards
-- **Delete confirmations** — no accidental data loss
-- **DPAPI-encrypted API key** — OpenRouter key is never stored in plaintext
-- **Sync error surfacing** — Obsidian sync failures shown in status bar
+- **Dashboard views** — table and Kanban board toggle
+- **Application tracking** — full job application lifecycle from Applied → Interview → Offer/Rejected
+- **Obsidian vault sync** — auto-sync to markdown files in your vault with protected user notes section
+- **PDF extraction** — extract text and company name from job posting PDFs
+- **Stat cards** — application count, response rate, and offer rate at a glance
+- **Dark theme** — full dark mode support with custom resource dictionary
+- **Delete confirmations** — prevent accidental data loss
 - **xUnit test suite** — service, settings, and in-memory repository tests
 
 ---
@@ -45,16 +47,16 @@ A production-quality .NET 8 WPF desktop application for tracking job application
 **Clean Architecture layers:**
 ```
 JobTracker.WPF          → Presentation (XAML, ViewModels, Converters)
-JobTracker.Application  → Use Cases (Services, DTOs, Interfaces, AI Prompts)
+JobTracker.Application  → Use Cases (Services, DTOs, Interfaces)
 JobTracker.Domain       → Entities, Enums, Repository Contracts
-JobTracker.Infrastructure → SQLite + Dapper, Markdown Sync, AI HTTP clients
+JobTracker.Infrastructure → SQLite + Dapper, Markdown Sync, PDF Extraction
 ```
 
 **Data flow:**
 ```
 UI (XAML binding) ←→ ViewModel ←→ Application Service ←→ Repository (Dapper/SQLite)
                                                       ↘ MarkdownSyncService → .md files
-                                  AI Service ←→ OpenRouter / Ollama HTTP API
+                                                      ↘ PdfExtractionService → Job PDFs
 ```
 
 ---
@@ -78,11 +80,9 @@ JobTracker/
     │
     ├── JobTracker.Application/
     │   ├── DTOs/
-    │   │   └── Dtos.cs                 # Records: JobApplicationDto, CreateRequest, AiAnalysisResult
+    │   │   └── Dtos.cs                 # Records: JobApplicationDto, CreateRequest
     │   ├── Interfaces/
-    │   │   └── IServices.cs            # IJobApplicationService, IMarkdownSyncService, IAiService
-    │   ├── Prompts/
-    │   │   └── AiPromptTemplates.cs    # Centralised prompt engineering
+    │   │   └── IServices.cs            # IJobApplicationService, IMarkdownSyncService, IPdfExtractionService
     │   └── Services/
     │       ├── JobApplicationService.cs
     │       └── SettingsService.cs      # JSON-persisted settings in %APPDATA%\JobTracker
@@ -95,16 +95,16 @@ JobTracker/
     │   │   └── OtherRepositories.cs          # Company, Contact, Skill
     │   ├── Markdown/
     │   │   └── MarkdownSyncService.cs  # Section-aware merge (never overwrites user notes)
-    │   └── AI/
-    │       └── AiServices.cs           # OpenRouterAiService + OllamaAiService + Factory
+    │   └── Pdf/
+    │       └── PdfExtractionService.cs # Extract text and metadata from job posting PDFs
     │
     └── JobTracker.WPF/
         ├── App.xaml / App.xaml.cs      # DI container + DB init + skill seeding
         ├── ViewModels/
         │   ├── ViewModelBase.cs        # INPC, RelayCommand, AsyncRelayCommand
         │   ├── DashboardViewModel.cs   # Week stats, filter/sort, CRUD commands
-        │   ├── ApplicationFormViewModel.cs  # Add/Edit form + AI analysis trigger
-        │   └── SettingsViewModel.cs    # Vault path, AI config, CV text
+        │   ├── ApplicationFormViewModel.cs  # Add/Edit form + PDF extraction
+        │   └── SettingsViewModel.cs    # Vault path, general app settings
         ├── Views/
         │   ├── MainWindow.xaml(.cs)    # Shell: sidebar nav + Frame
         │   └── Pages/
@@ -153,19 +153,7 @@ The app auto-creates:
 - `%APPDATA%\JobTracker\settings.json` — your preferences
 - 26 default IT/security skills pre-seeded
 
-### 3. Configure AI (optional but recommended)
-
-**Option A — OpenRouter (free, online):**
-1. Register at https://openrouter.ai (no credit card)
-2. Create an API key
-3. In the app: Settings → paste key → select model `mistralai/mistral-7b-instruct:free`
-
-**Option B — Ollama (offline, private):**
-1. Install Ollama: https://ollama.ai
-2. `ollama pull mistral`
-3. In app Settings → Provider → `ollama`
-
-### 4. Configure Obsidian sync
+### 3. Configure Obsidian vault sync
 
 Settings → Browse → select your vault folder root.
 
@@ -191,32 +179,6 @@ ApplicationSkills (JobApplicationId FK, SkillId FK, IsOwned, IsRequired)
 ```
 
 **Indexes:** AppliedDate, Status, CompanyId — the three most-filtered columns.
-
----
-
-## AI Prompt Design
-
-The prompt in `AiPromptTemplates.cs` enforces structured JSON output:
-
-```json
-{
-  "missingSkills": ["SIEM", "Defender XDR"],
-  "cvImprovements": [
-    "Change 'Managed infrastructure' → 'Reduced MTTR 40% by automating patch deployment across 300 VMs using PowerShell DSC'"
-  ],
-  "courseRecommendations": [
-    "Microsoft SC-200 — Microsoft Learn (free)",
-    "TryHackMe SOC Level 1 — TryHackMe (free tier available)"
-  ],
-  "summary": "Strong infrastructure match. Main gap is SIEM/SOAR tooling. SC-200 is your highest-ROI next cert."
-}
-```
-
-**Why this prompt works:**
-- Forces JSON → no parsing failures from conversational preamble
-- Separates concern (skills vs CV language vs courses)
-- Specifies free-first for course recommendations
-- Uses domain-aware framing (IT infra + security context)
 
 ---
 
@@ -259,7 +221,7 @@ remote: false
 
 ## User Notes
 <!-- USER_NOTES_START -->
-_Add your personal notes here._
+_
 <!-- USER_NOTES_END -->
 ```
 
@@ -267,45 +229,42 @@ The `USER_NOTES_START/END` markers protect your manual notes from being overwrit
 
 ---
 
-## Adding a New AI Provider
-
-1. Implement `IAiService` in `Infrastructure/AI/`
-2. Add a case to `AiServiceFactory.Create()`
-3. Add the option to `SettingsViewModel.AiProviders`
-
-No other code changes required — the rest of the system is interface-bound.
-
----
-
 ## Extending the Application
 
-### Add email parsing (future)
+### Add email parsing
 - Add `IEmailService` in Application.Interfaces
 - Implement with `MailKit` in Infrastructure
 - Wire a background service to poll inbox and auto-create draft applications
 
-### Add analytics
-- Add a `DashboardAnalyticsViewModel`
-- Query aggregates from `IJobApplicationRepository`
-- Display with OxyPlot or LiveCharts2 (both free/OSS)
+### Add interview scheduling
+- Add a calendar/timeline view in WPF
+- Add an `Interview` entity to track dates, times, and interviewer details
+- Display interviews on the Dashboard with urgency indicators
 
 ### Add cloud sync
-- Add `ICloudSyncService`
+- Add `ICloudSyncService` in Application.Interfaces
 - Implement with Azure Blob Storage or Dropbox API
-- Trigger after every local DB write
+- Trigger after every local DB write for real-time sync across devices
+
+### Add CV improvements AI analysis
+- Add `IAiService` in Application.Interfaces
+- Implement with OpenRouter or Ollama in Infrastructure
+- Add DPAPI-encrypted API key storage in SettingsService
+- Trigger from ApplicationFormViewModel with job description and CV text
 
 ---
 
 ## Known Limitations / TODOs
 
-- [ ] No CSV / PDF export
-- [ ] No calendar / timeline view for interview scheduling
-- [ ] No email parsing integration
-- [ ] No cloud sync (Dropbox / Azure Blob)
-- [ ] ViewModel unit tests need `net8.0-windows` test project (WPF dependency)
-- [ ] No toast/snackbar notifications (uses status bar text)
+- [ ] CSV / Excel export for applications
+- [ ] Calendar / timeline view for interview scheduling
+- [ ] Email parsing integration to auto-create applications
+- [ ] Cloud sync (Dropbox / Azure Blob) for multi-device support
+- [ ] AI-powered CV improvement suggestions (requires API integration)
+- [ ] Toast/snackbar notifications (currently uses status bar)
+- [ ] ViewModel unit tests require `net8.0-windows` test project (WPF dependency)
 
 ---
 
 ## License
-MIT — use freely, adapt to your own tracker, sell as a product, whatever you need.
+MIT — use freely, adapt to your own tracker, whatever you need.
