@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper"              Version="2.1.28"/>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.8"/>
+    <PackageReference Include="itext7"               Version="7.2.5"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JobTracker.Domain\JobTracker.Domain.csproj"/>
+    <ProjectReference Include="..\JobTracker.Application\JobTracker.Application.csproj"/>
+  </ItemGroup>
+</Project>

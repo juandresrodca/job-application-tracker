@@ -1,0 +1,266 @@
+<Page x:Class="JobTracker.WPF.Views.Pages.ApplicationFormPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Application Form"
+      Background="{StaticResource BackgroundBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ── Main form ─────────────────────────────────────── -->
+            <StackPanel Grid.Column="0" MaxWidth="800" HorizontalAlignment="Left">
+
+                <!-- Title bar -->
+                <DockPanel Margin="0,0,0,24">
+                    <TextBlock Text="{Binding FormTitle}" Style="{StaticResource PageTitleText}"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Content="Cancel" Command="{Binding CancelCommand}"
+                                Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                        <Button Content="💾 Save" Command="{Binding SaveCommand}"
+                                Style="{StaticResource PrimaryButton}"/>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Form fields -->
+                <Border Style="{StaticResource FormCard}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Role Name -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,16">
+                            <TextBlock Text="Role Name *" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding RoleName, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"
+                                     BorderBrush="{Binding HasRoleNameError, Converter={StaticResource BoolToBrushConverter}}"/>
+                            <TextBlock Text="{Binding RoleNameError}" Style="{StaticResource ErrorText}"
+                                       Visibility="{Binding HasRoleNameError, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </StackPanel>
+
+                        <!-- Company -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,16">
+                            <DockPanel Margin="0,0,0,4">
+                                <TextBlock Text="Company *" Style="{StaticResource FieldLabel}" DockPanel.Dock="Left"/>
+                                <Button Content="+ New" Command="{Binding ShowCreateCompanyDialogCommand}"
+                                        Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right"
+                                        Padding="8,4" FontSize="12"/>
+                            </DockPanel>
+                            <ComboBox ItemsSource="{Binding Companies}"
+                                      SelectedItem="{Binding SelectedCompany}"
+                                      DisplayMemberPath="Name"
+                                      Style="{StaticResource FormCombo}"
+                                      BorderBrush="{Binding HasCompanyError, Converter={StaticResource BoolToBrushConverter}}"/>
+                            <TextBlock Text="{Binding CompanyError}" Style="{StaticResource ErrorText}"
+                                       Visibility="{Binding HasCompanyError, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </StackPanel>
+
+                        <!-- Contact -->
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,0,16">
+                            <DockPanel Margin="0,0,0,8">
+                                <TextBlock Text="Contact Person" Style="{StaticResource FieldLabel}" DockPanel.Dock="Left"/>
+                                <Button Content="+ New" Command="{Binding ShowCreateContactDialogCommand}"
+                                        Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right"
+                                        Padding="8,4" FontSize="12" IsEnabled="{Binding SelectedCompany, Converter={StaticResource NullToBoolConverter}}"/>
+                            </DockPanel>
+                            <ComboBox ItemsSource="{Binding Contacts}"
+                                      SelectedItem="{Binding SelectedContact}"
+                                      DisplayMemberPath="Name"
+                                      Style="{StaticResource FormCombo}"/>
+                        </StackPanel>
+
+                        <!-- Status + Applied Date -->
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,8,16">
+                            <TextBlock Text="Status" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding AllStatuses}"
+                                      SelectedItem="{Binding Status}"
+                                      Style="{StaticResource FormCombo}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="8,0,0,16">
+                            <TextBlock Text="Applied Date" Style="{StaticResource FieldLabel}"/>
+                            <DatePicker SelectedDate="{Binding AppliedDate}"
+                                        Style="{StaticResource FormDatePicker}"/>
+                        </StackPanel>
+
+                        <!-- Salary + Remote -->
+                        <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,8,16">
+                            <TextBlock Text="Salary Range" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding SalaryRange, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Grid.Column="1" Margin="8,0,0,16"
+                                    VerticalAlignment="Center" Orientation="Horizontal">
+                            <CheckBox IsChecked="{Binding IsRemote}" Content="Remote Position"
+                                      Style="{StaticResource FormCheckBox}"
+                                      Margin="0,24,0,0"/>
+                        </StackPanel>
+
+                        <!-- Job URL -->
+                        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,0">
+                            <TextBlock Text="Job Posting URL" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding JobPostingUrl, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Job Description -->
+                <Border Style="{StaticResource FormCard}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,8">
+                            <TextBlock Text="Job Description" Style="{StaticResource SectionHeader}" DockPanel.Dock="Left"/>
+                            <Button Content="📄 Load from PDF" Command="{Binding LoadFromPdfCommand}"
+                                    Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right"
+                                    HorizontalAlignment="Right" Padding="8,4"/>
+                        </DockPanel>
+                        <TextBox Text="{Binding JobDescription, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MultiLineTextBox}"
+                                 Height="150"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Skills -->
+                <Border Style="{StaticResource FormCard}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Required Skills" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
+                        <ItemsControl ItemsSource="{Binding Skills}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected}"
+                                              Content="{Binding Name}"
+                                              Margin="0,0,16,8"
+                                              Style="{StaticResource FormCheckBox}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Notes -->
+                <Border Style="{StaticResource FormCard}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Notes" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
+                        <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MultiLineTextBox}"
+                                 Height="100"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- New Company Dialog Overlay -->
+            <Grid Grid.Column="0" Background="#80000000" Visibility="{Binding IsCreatingNewCompany, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Border Background="{StaticResource BackgroundBrush}"
+                        BorderBrush="{StaticResource AccentBrush}"
+                        BorderThickness="2"
+                        CornerRadius="8"
+                        MaxWidth="400"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="Create New Company" Style="{StaticResource SectionHeader}" Margin="0,0,0,16"/>
+
+                        <!-- Company Name -->
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Company Name *" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding NewCompanyName, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Company Website -->
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Website" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding NewCompanyWebsite, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Company Industry -->
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Industry" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding NewCompanyIndustry, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Company Location -->
+                        <StackPanel Margin="0,0,0,16">
+                            <TextBlock Text="Location" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding NewCompanyLocation, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Buttons -->
+                        <DockPanel>
+                            <Button Content="Cancel" Command="{Binding CancelCreateCompanyCommand}"
+                                    Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                            <Button Content="✓ Create" Command="{Binding CreateNewCompanyCommand}"
+                                    Style="{StaticResource PrimaryButton}" DockPanel.Dock="Right"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- New Contact Dialog Overlay -->
+            <Grid Grid.Column="0" Background="#80000000" Visibility="{Binding IsCreatingNewContact, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Border Background="{StaticResource BackgroundBrush}"
+                        BorderBrush="{StaticResource AccentBrush}"
+                        BorderThickness="2"
+                        CornerRadius="8"
+                        MaxWidth="400"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="Create New Contact" Style="{StaticResource SectionHeader}" Margin="0,0,0,16"/>
+
+                        <!-- Contact Name -->
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Name *" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding NewContactName, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Contact Email -->
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Email" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding NewContactEmail, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Contact Role -->
+                        <StackPanel Margin="0,0,0,16">
+                            <TextBlock Text="Role/Title" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding NewContactRole, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Buttons -->
+                        <DockPanel>
+                            <Button Content="Cancel" Command="{Binding CancelCreateContactCommand}"
+                                    Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                            <Button Content="✓ Create" Command="{Binding CreateNewContactCommand}"
+                                    Style="{StaticResource PrimaryButton}" DockPanel.Dock="Right"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>

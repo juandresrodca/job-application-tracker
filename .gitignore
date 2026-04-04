@@ -1,0 +1,30 @@
+## .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.userprefs
+TestResults/
+packages/
+
+## Secrets — never commit these
+**/appsettings.secrets.json
+**/settings.json
+**/*.pfx
+**/*.p12
+
+## Publish output
+publish/
+
+## SQLite DB (local data, not for repo)
+*.db
+*.db-wal
+*.db-shm
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Rider
+.idea/

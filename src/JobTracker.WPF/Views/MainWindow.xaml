@@ -1,0 +1,88 @@
+<Window x:Class="JobTracker.WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        Title="Job Application Tracker"
+        Height="800" Width="1280"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NavigateCommand}" CommandParameter="NewApplication"/>
+        <KeyBinding Key="D" Modifiers="Control" Command="{Binding NavigateCommand}" CommandParameter="Dashboard"/>
+        <KeyBinding Key="C" Modifiers="Control" Command="{Binding NavigateCommand}" CommandParameter="Companies"/>
+        <KeyBinding Key="T" Modifiers="Control" Command="{Binding NavigateCommand}" CommandParameter="Contacts"/>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding NavigateCommand}" CommandParameter="Skills"/>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding NavigateCommand}" CommandParameter="Settings"/>
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}"/>
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ── Sidebar Nav ─────────────────────────────────────────────────── -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
+            <DockPanel>
+                <!-- Logo / Title -->
+                <StackPanel DockPanel.Dock="Top" Margin="16,24,16,32">
+                    <TextBlock Text="📋" FontSize="32" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Job Tracker"
+                               Style="{StaticResource TitleText}"
+                               HorizontalAlignment="Center"
+                               Margin="0,8,0,0"/>
+                    <TextBlock Text="{Binding WeekInfo}"
+                               Style="{StaticResource SubtleText}"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Navigation Buttons -->
+                <StackPanel DockPanel.Dock="Top" Margin="8,0">
+                    <Button Content="🏠  Dashboard"
+                            Style="{StaticResource NavButton}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="Dashboard"/>
+                    <Button Content="➕  New Application"
+                            Style="{StaticResource NavButton}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="NewApplication"/>
+                    <Button Content="🏢  Companies"
+                            Style="{StaticResource NavButton}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="Companies"/>
+                    <Button Content="👤  Contacts"
+                            Style="{StaticResource NavButton}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="Contacts"/>
+                    <Button Content="🎓  Skills"
+                            Style="{StaticResource NavButton}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="Skills"/>
+                    <Button Content="⚙️  Settings"
+                            Style="{StaticResource NavButton}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="Settings"/>
+                </StackPanel>
+
+                <!-- Stats summary at the bottom of sidebar -->
+                <Border DockPanel.Dock="Bottom" Margin="8,0,8,16"
+                        Background="{StaticResource CardBrush}"
+                        CornerRadius="8" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="This Week" Style="{StaticResource LabelText}"/>
+                        <TextBlock Text="{Binding WeekStats}" Style="{StaticResource ValueText}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+            </DockPanel>
+        </Border>
+
+        <!-- ── Main Content Frame ─────────────────────────────────────────── -->
+        <Frame Grid.Column="1"
+               x:Name="MainFrame"
+               NavigationUIVisibility="Hidden"
+               Background="{StaticResource BackgroundBrush}"/>
+    </Grid>
+</Window>
