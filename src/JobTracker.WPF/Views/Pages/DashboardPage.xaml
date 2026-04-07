@@ -21,7 +21,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="{Binding CurrentWeekNumber, StringFormat='Week {0} — Applications'}"
+                <TextBlock Text="{Binding DashboardTitle}"
                            Style="{StaticResource PageTitleText}"/>
                 <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubtleText}" Margin="0,4,0,0"/>
             </StackPanel>
@@ -71,6 +71,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBox Grid.Column="0"
@@ -107,7 +108,13 @@
                         Style="{StaticResource SecondaryButton}"
                         Margin="0,0,8,0"/>
 
-                <Button Grid.Column="5" Content="➕ New Application"
+                <Button Grid.Column="5"
+                        Content="{Binding IsWeekView, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Global Overview|This Week'}"
+                        Command="{Binding ToggleDashboardViewCommand}"
+                        Style="{StaticResource SecondaryButton}"
+                        Margin="0,0,8,0"/>
+
+                <Button Grid.Column="6" Content="➕ New Application"
                         Command="{Binding NewApplicationCommand}"
                         Style="{StaticResource PrimaryButton}"/>
             </Grid>

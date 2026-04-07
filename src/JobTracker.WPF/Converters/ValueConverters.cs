@@ -106,3 +106,18 @@ public class DaysToUrgencyConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotImplementedException();
 }
+
+[ValueConversion(typeof(bool), typeof(string))]
+public class BoolToStringConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        bool boolValue = value is true;
+        // parameter format: "TrueString|FalseString"
+        string[] parts = parameter?.ToString()?.Split('|') ?? new[] { "True", "False" };
+        return boolValue ? parts[0] : (parts.Length > 1 ? parts[1] : "False");
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotImplementedException();
+}

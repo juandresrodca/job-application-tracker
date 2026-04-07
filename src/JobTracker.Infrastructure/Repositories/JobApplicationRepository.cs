@@ -73,21 +73,31 @@ public class JobApplicationRepository : IJobApplicationRepository
     {
         using var conn = _db.CreateConnection();
 
-        // SQLite: use strftime to calculate ISO week
+        // ISO 8601: Week 1 is the week containing January 4th
+        var jan4 = new DateTime(year, 1, 4);
+        // Find Monday of the week containing Jan 4
+        int dayOfWeek = (int)jan4.DayOfWeek;
+        int daysToMonday = dayOfWeek == 0 ? -6 : 1 - dayOfWeek;
+        var firstMonday = jan4.AddDays(daysToMonday);
+
+        // Calculate start and end of target week
+        var weekStart = firstMonday.AddDays((isoWeek - 1) * 7);
+        var weekEnd = weekStart.AddDays(7);
+
         var sql = """
             SELECT ja.*, c.*, ct.*
             FROM JobApplications ja
             JOIN Companies c ON c.Id = ja.CompanyId
             LEFT JOIN Contacts ct ON ct.Id = ja.ContactId
-            WHERE CAST(strftime('%W', ja.AppliedDate) AS INTEGER) = @week
-              AND CAST(strftime('%Y', ja.AppliedDate) AS INTEGER) = @year
+            WHERE date(ja.AppliedDate) >= date(@weekStart)
+              AND date(ja.AppliedDate) < date(@weekEnd)
             ORDER BY ja.AppliedDate DESC
             """;
 
         return await conn.QueryAsync<JobApplication, Company, Contact, JobApplication>(
             sql,
             (ja, c, ct) => { ja.Company = c; ja.Contact = ct; return ja; },
-            new { week = isoWeek, year },
+            new { weekStart, weekEnd },
             splitOn: "Id,Id");
     }
 

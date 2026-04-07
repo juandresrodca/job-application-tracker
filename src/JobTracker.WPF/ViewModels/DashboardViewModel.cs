@@ -49,6 +49,20 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
         set { SetField(ref _isKanbanView, value); ApplyFilters(); }
     }
 
+    private bool _isWeekView = true;
+    public bool IsWeekView
+    {
+        get => _isWeekView;
+        set
+        {
+            if (SetField(ref _isWeekView, value))
+            {
+                OnPropertyChanged(nameof(DashboardTitle));
+                _ = LoadDataAsync();
+            }
+        }
+    }
+
     // ── Header stats ────────────────────────────────────────────────────────
     private int _currentWeekNumber;
     public int CurrentWeekNumber
@@ -92,6 +106,11 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
         private set => SetField(ref _offerRate, value);
     }
 
+    public string DashboardTitle =>
+        IsWeekView
+            ? $"Week {CurrentWeekNumber} — Applications"
+            : "All Applications — Global Overview";
+
     // ── Selected item ────────────────────────────────────────────────────────
     private JobApplicationDto? _selectedApplication;
     public JobApplicationDto? SelectedApplication
@@ -132,6 +151,7 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
     public RelayCommand NewApplicationCommand { get; }
     public RelayCommand EditApplicationCommand { get; }
     public RelayCommand ToggleViewCommand { get; }
+    public RelayCommand ToggleDashboardViewCommand { get; }
 
     // ── Events ────────────────────────────────────────────────────────────────
     public event Action<int>? EditApplicationRequested;
@@ -142,7 +162,7 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
         _appService = appService;
         _dialog = dialog;
 
-        CurrentWeekNumber = ISOWeek.GetWeekOfYear(DateTime.Now);
+        UpdateCurrentWeekNumber();
 
         LoadCommand = new AsyncRelayCommand(LoadDataAsync);
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
@@ -155,10 +175,22 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
             () => EditApplicationRequested?.Invoke(SelectedApplication!.Id),
             () => SelectedApplication is not null);
         ToggleViewCommand = new RelayCommand(() => IsKanbanView = !IsKanbanView);
+        ToggleDashboardViewCommand = new RelayCommand(() => IsWeekView = !IsWeekView);
 
         // Surface sync warnings from background thread back to status bar
         _appService.SyncWarning += msg =>
             System.Windows.Application.Current.Dispatcher.InvokeAsync(() => StatusMessage = $"⚠️ {msg}");
+    }
+
+    /// <summary>Updates the current week number based on today's date.</summary>
+    private void UpdateCurrentWeekNumber()
+    {
+        int newWeekNumber = ISOWeek.GetWeekOfYear(DateTime.Now);
+        if (CurrentWeekNumber != newWeekNumber)
+        {
+            CurrentWeekNumber = newWeekNumber;
+            OnPropertyChanged(nameof(DashboardTitle));
+        }
     }
 
     public async Task LoadDataAsync()
@@ -167,32 +199,44 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
         StatusMessage = "Loading applications...";
         try
         {
+            // Update week number in case the app crossed a week boundary
+            UpdateCurrentWeekNumber();
+
             var all = (await _appService.GetAllApplicationsAsync()).ToList();
+            var week = (await _appService.GetCurrentWeekApplicationsAsync()).ToList();
+
+            // Use the appropriate dataset based on view mode
+            var source = IsWeekView ? week : all;
 
             Applications.Clear();
-            foreach (var app in all)
+            foreach (var app in source)
                 Applications.Add(app);
 
-            TotalApplications = all.Count;
-            ActiveApplications = all.Count(a => a.Status is ApplicationStatus.Applied
+            // Compute stats over the active source
+            TotalApplications = source.Count;
+            ActiveApplications = source.Count(a => a.Status is ApplicationStatus.Applied
                 or ApplicationStatus.Screening or ApplicationStatus.Interview
                 or ApplicationStatus.TechnicalTest);
-            InterviewCount = all.Count(a => a.Status == ApplicationStatus.Interview);
+            InterviewCount = source.Count(a => a.Status == ApplicationStatus.Interview);
 
             // Response rate: at least moved past Applied
-            var responded = all.Count(a => a.Status is not ApplicationStatus.Applied);
-            ResponseRate = all.Count > 0
-                ? $"{responded * 100 / all.Count}%"
+            var responded = source.Count(a => a.Status is not ApplicationStatus.Applied);
+            ResponseRate = source.Count > 0
+                ? $"{responded * 100 / source.Count}%"
                 : "—";
 
             // Offer rate: received an offer or accepted
-            var offers = all.Count(a => a.Status is ApplicationStatus.Offer or ApplicationStatus.Accepted);
-            OfferRate = all.Count > 0
-                ? $"{offers * 100 / all.Count}%"
+            var offers = source.Count(a => a.Status is ApplicationStatus.Offer or ApplicationStatus.Accepted);
+            OfferRate = source.Count > 0
+                ? $"{offers * 100 / source.Count}%"
                 : "—";
 
             ApplyFilters();
-            StatusMessage = $"Loaded {all.Count} applications — Week {CurrentWeekNumber}";
+
+            if (IsWeekView)
+                StatusMessage = $"Loaded {source.Count} applications this week";
+            else
+                StatusMessage = $"Loaded {all.Count} applications total";
         }
         catch (Exception ex)
         {

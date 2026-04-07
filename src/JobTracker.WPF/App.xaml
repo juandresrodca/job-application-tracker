@@ -16,6 +16,7 @@
             <converters:StatusToColorConverter           x:Key="StatusToColorConverter"/>
             <converters:DaysToUrgencyConverter           x:Key="DaysToUrgencyConverter"/>
             <converters:BoolToBrushConverter             x:Key="BoolToBrushConverter"/>
+            <converters:BoolToStringConverter            x:Key="BoolToStringConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

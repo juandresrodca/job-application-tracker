@@ -14,11 +14,20 @@ A production-quality .NET 8 WPF desktop application for tracking job application
 
 ## Screenshots
 
-> _Add screenshots here after first run. Use Win + Shift + S to capture, save to `docs/screenshots/`._
+### Dashboard — Table View
+Track all your job applications at a glance with sortable columns and real-time status updates.
 
-| Dashboard (Table) | Dashboard (Kanban) | Application Form |
-|---|---|---|
-| ![dashboard](docs/screenshots/dashboard-table.png) | ![kanban](docs/screenshots/dashboard-kanban.png) | ![form](docs/screenshots/application-form.png) |
+![Dashboard Table View](docs/screenshots/dashboard-table.png)
+
+### Dashboard — Kanban Board
+Organize your applications by status with an intuitive drag-and-drop Kanban workflow.
+
+![Dashboard Kanban View](docs/screenshots/dashboard-kanban.png)
+
+### Application Form
+Comprehensive job application form with PDF extraction, skill tracking, and company/contact management.
+
+![Application Form](docs/screenshots/application-form.png)
 
 ---
 

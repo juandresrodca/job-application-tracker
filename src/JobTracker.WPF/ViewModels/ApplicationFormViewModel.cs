@@ -21,7 +21,7 @@ public class ApplicationFormViewModel : ViewModelBase
 
     private int? _editingId;
     public bool IsEditing => _editingId.HasValue;
-    public string FormTitle => IsEditing ? "Edit Application" : "New Application";
+    public string FormTitle => IsEditing ? "View/Edit Application" : "New Application";
 
     // ── Form fields ──────────────────────────────────────────────────────────
     private string _roleName = string.Empty;
@@ -187,6 +187,8 @@ public class ApplicationFormViewModel : ViewModelBase
         Notes = app.Notes ?? string.Empty;
 
         SelectedCompany = Companies.FirstOrDefault(c => c.Name == app.CompanyName);
+        if (app.ContactName is not null)
+            SelectedContact = Contacts.FirstOrDefault(c => c.Name == app.ContactName);
 
         foreach (var skill in Skills)
             skill.IsSelected = app.Skills.Contains(skill.Name);
