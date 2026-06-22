@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JobTracker — Track every job application in one quiet desktop app</title>
+  <meta name="description" content="A .NET 8 WPF job-application tracker with a Kanban board, Obsidian vault sync, and PDF extraction — all stored locally, no account required." />
+
+  <!-- Open Graph / social preview -->
+  <meta property="og:title" content="JobTracker" />
+  <meta property="og:description" content="Track every job application in one quiet desktop app. Kanban board, Obsidian sync, PDF extraction — all local, no account required." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="screenshots/dashboard-kanban.png" />
+  <meta name="theme-color" content="#0A0D13" />
+
+  <!-- Fonts from the Juan Corp design system -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --font-display: 'Space Grotesk', 'Geist', system-ui, sans-serif;
+      --font-body: 'Geist', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+      --bg: #0A0D13;
+      --bg-2: #0B0E14;
+      --bg-card: #11151d;
+      --bg-inset: #10141c;
+      --border: #20262f;
+      --border-2: #161b22;
+      --border-3: #1b212b;
+      --text: #EDF0F4;
+      --text-2: #aeb6c4;
+      --text-3: #98A1B2;
+      --text-faint: #5b6677;
+
+      --accent: #14A38E;     /* teal-500 */
+      --accent-2: #2DBDA6;   /* teal-400 */
+      --accent-3: #5fe0c8;
+      --accent-ink: #04140f;
+
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .maxw { max-width: 1180px; margin: 0 auto; }
+
+    @keyframes jt-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .rise { animation: jt-rise 0.7s var(--ease-out) both; }
+
+    /* ---- Motion carried over from the Claude design ---- */
+    @keyframes jtpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    @keyframes jt-diffuse {
+      0%, 24%   { opacity: 1; filter: blur(0);    transform: translateY(0) scale(1); }
+      39%, 75%  { opacity: 0; filter: blur(12px); transform: translateY(-10px) scale(1.10); }
+      90%, 100% { opacity: 1; filter: blur(0);    transform: translateY(0) scale(1); }
+    }
+    @keyframes jt-demo-cycle {
+      0%, 22%   { opacity: 0.10; filter: blur(7px) saturate(0.8); transform: scale(1.06); }
+      42%, 73%  { opacity: 1;    filter: blur(0)   saturate(1);   transform: scale(1); }
+      92%, 100% { opacity: 0.10; filter: blur(7px) saturate(0.8); transform: scale(1.06); }
+    }
+    @keyframes jt-hintfade {
+      0%, 30%   { opacity: 0; }
+      46%, 70%  { opacity: 1; }
+      86%, 100% { opacity: 0; }
+    }
+
+    /* ---- Scroll-reveal transitions ---- */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .hero-shot, .hint, [data-diffuse] span { animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important; }
+    }
+
+    /* ---------- Nav ---------- */
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px; border-bottom: 1px solid var(--border-2);
+      background: rgba(10,13,19,0.8); backdrop-filter: blur(10px);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand .name { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: #fff; }
+    .nav-links { display: flex; align-items: center; gap: 28px; font-size: 13.5px; color: var(--text-3); }
+    .nav-links a:hover { color: #fff; }
+    .nav-gh {
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px;
+      border: 1px solid #2b333f; border-radius: 8px; color: #cdd4df; font-weight: 600;
+    }
+    .nav-gh:hover { border-color: #3a4350; color: #fff; }
+    @media (max-width: 720px) { .nav-links a:not(.nav-gh) { display: none; } .nav, .hero, .section { padding-left: 22px; padding-right: 22px; } }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px;
+      border-radius: 9px; font-family: var(--font-body); font-weight: 600; font-size: 15px;
+      cursor: pointer; border: 1px solid transparent; transition: all 160ms var(--ease-out);
+    }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    .btn-primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+    .btn-ghost { background: rgba(17,21,29,0.8); border-color: #2b333f; color: var(--text); }
+    .btn-ghost:hover { border-color: #3a4350; background: #161b24; }
+    .btn svg { flex: none; }
+
+    /* ---------- Hero ---------- */
+    .hero { position: relative; overflow: hidden; padding: 60px 40px 64px; background: var(--bg); text-align: center; }
+    .hero-shot-wrap {
+      position: absolute; left: 0; right: 0; top: 0; height: 660px; z-index: 0;
+      display: flex; align-items: flex-start; justify-content: center; padding-top: 28px; pointer-events: none;
+    }
+    .hero-shot {
+      width: 1120px; max-width: 92%; border-radius: 14px; overflow: hidden;
+      border: 1px solid var(--border); box-shadow: 0 40px 110px rgba(0,0,0,0.6);
+      animation: jt-demo-cycle 11s ease-in-out infinite;
+      will-change: opacity, filter, transform;
+    }
+    .hero-shot img { width: 100%; display: block; }
+    .hero-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(120% 95% at 50% 48%, transparent 52%, rgba(10,13,19,0.72) 100%); }
+    .hero-inner { position: relative; z-index: 2; }
+    .hero h1 {
+      font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 5vw, 47px);
+      line-height: 1.08; letter-spacing: -0.025em; color: #fff; margin: 22px 0 0;
+    }
+    .hero .sub { font-size: clamp(15px, 2vw, 17px); color: var(--text-2); margin: 28px auto 0; max-width: 600px; }
+    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 40px; }
+    .badge {
+      font-family: var(--font-mono); font-size: 12px; color: #9aa4b2;
+      padding: 5px 11px; border: 1px solid #2b323d; border-radius: 7px; background: rgba(10,13,19,0.5);
+    }
+    .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+    .hint { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); margin-top: 26px; animation: jt-hintfade 11s ease-in-out infinite; }
+
+    /* ---------- Framed screenshot ---------- */
+    .section { padding: 0 40px; }
+    .frame {
+      border-radius: 14px; border: 1px solid var(--border); overflow: hidden;
+      background: #0E1117; box-shadow: 0 20px 50px rgba(0,0,0,0.35); margin: 0 auto;
+    }
+    .frame + .frame { margin-top: 28px; }
+    .frame-bar { display: flex; align-items: center; gap: 8px; padding: 11px 16px; background: var(--bg-2); border-bottom: 1px solid var(--border-3); }
+    .dot { width: 11px; height: 11px; border-radius: 9999px; }
+    .frame-bar .label { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); margin-left: 10px; }
+    .frame img { width: 100%; display: block; }
+
+    /* ---------- Section heading ---------- */
+    .head { text-align: center; }
+    .overline { font-weight: 600; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-3); }
+    .head h2 { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 4vw, 32px); letter-spacing: -0.02em; color: #fff; margin: 10px 0 0; }
+
+    /* ---------- Feature cards ---------- */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    @media (max-width: 820px) { .features { grid-template-columns: 1fr; } }
+    .fcard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: all 160ms var(--ease-out); }
+    .fcard:hover { border-color: #2c5e57; transform: translateY(-3px); }
+    .fcard .ico { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .fcard .ico.teal { background: rgba(20,163,142,0.13); color: var(--accent-2); }
+    .fcard .ico.violet { background: rgba(124,102,224,0.16); }
+    .fcard h3 { font-family: var(--font-display); font-weight: 600; font-size: 18px; color: #fff; margin: 16px 0 0; }
+    .fcard p { font-size: 14px; line-height: 1.55; color: var(--text-3); margin: 8px 0 0; }
+
+    /* ---------- Architecture ---------- */
+    .arch { background: var(--bg-2); border: 1px solid var(--border-3); border-radius: 14px; padding: 30px 32px; }
+    .arch-head { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    .arch-head h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; color: #fff; }
+    .arch-head .tag { font-family: var(--font-mono); font-size: 12.5px; color: var(--accent-3); }
+    .layers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 22px; }
+    @media (max-width: 720px) { .layers { grid-template-columns: 1fr 1fr; } }
+    .layer { border: 1px solid var(--border); border-radius: 10px; padding: 14px 15px; background: var(--bg-inset); }
+    .layer .t { font-family: var(--font-mono); font-size: 12px; color: var(--accent-2); }
+    .layer .d { font-size: 12.5px; color: #7a8597; margin-top: 5px; line-height: 1.4; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    .chip { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-3); background: #161b24; border: 1px solid var(--border-2); border-radius: 7px; padding: 5px 10px; }
+
+    /* ---------- Install ---------- */
+    .note {
+      max-width: 760px; margin: 22px auto 0; padding: 16px 20px; font-size: 13.5px; line-height: 1.6;
+      background: rgba(20,163,142,0.07); border: 1px solid rgba(20,163,142,0.28); border-radius: 10px; color: var(--text-3);
+    }
+    .note strong { color: var(--text); }
+    code { font-family: var(--font-mono); font-size: 0.88em; background: var(--bg-inset); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; }
+
+    /* ---------- Footer ---------- */
+    .foot { display: flex; align-items: center; justify-content: space-between; padding: 22px 40px; border-top: 1px solid var(--border-2); font-size: 13px; color: var(--text-faint); flex-wrap: wrap; gap: 10px; }
+    .foot .mono { font-family: var(--font-mono); font-size: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- Radar-rings logo, reused inline -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="95" fill="none" stroke="#F85149" stroke-width="10"/>
+      <circle cx="100" cy="100" r="62" fill="none" stroke="#8B949E" stroke-width="10"/>
+      <line x1="5" y1="100" x2="70" y2="100" stroke="#30363D" stroke-width="4"/>
+      <line x1="130" y1="100" x2="195" y2="100" stroke="#30363D" stroke-width="4"/>
+      <circle cx="100" cy="100" r="30" fill="#3FB950"/>
+      <circle cx="100" cy="100" r="6" fill="#E6EDF3"/>
+    </symbol>
+  </svg>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="brand">
+      <svg width="30" height="30"><use href="#logo"/></svg>
+      <span class="name">JobTracker</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#dashboard">Demo</a>
+      <a href="#architecture">Architecture</a>
+      <a class="nav-gh" href="https://github.com/juandresrodca/job-application-tracker" target="_blank" rel="noopener">
+        GitHub
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-shot-wrap">
+      <div class="hero-shot"><img src="screenshots/dashboard-kanban.png" alt="JobTracker Kanban board" loading="eager" /></div>
+    </div>
+    <div class="hero-veil"></div>
+
+    <div class="hero-inner maxw">
+      <h1><span data-diffuse>Track every job application</span><br/><span data-diffuse>in one quiet desktop app.</span></h1>
+      <p class="sub"><span data-diffuse>A .NET 8 WPF tracker with a Kanban board, Obsidian vault sync, and PDF extraction — all stored locally, no account required.</span></p>
+
+      <div class="hero-cta rise" style="animation-delay:.16s">
+        <a class="btn btn-primary" href="https://github.com/juandresrodca/job-application-tracker/releases/latest" target="_blank" rel="noopener">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Download for Windows
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/juandresrodca/job-application-tracker" target="_blank" rel="noopener">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></svg>
+          View source
+        </a>
+      </div>
+
+      <div class="badges rise" style="animation-delay:.24s">
+        <span class="badge">.NET 8.0</span>
+        <span class="badge">Windows 10 / 11</span>
+        <span class="badge">MIT</span>
+        <span class="badge">v0.1.0-beta</span>
+      </div>
+
+      <div class="hint">screenshots from the live app</div>
+    </div>
+  </header>
+
+  <!-- DASHBOARD SHOWCASE -->
+  <section id="dashboard" class="section" style="padding-top:42px; padding-bottom:36px;">
+    <div class="maxw">
+      <div class="frame reveal">
+        <div class="frame-bar">
+          <span class="dot" style="background:#F85149"></span>
+          <span class="dot" style="background:#E0A100"></span>
+          <span class="dot" style="background:#3FB950"></span>
+          <span class="label">JobTracker — Dashboard · table view</span>
+        </div>
+        <img src="screenshots/dashboard-table.png" alt="JobTracker dashboard, sortable table view" loading="lazy" />
+      </div>
+
+      <div class="frame reveal">
+        <div class="frame-bar">
+          <span class="dot" style="background:#F85149"></span>
+          <span class="dot" style="background:#E0A100"></span>
+          <span class="dot" style="background:#3FB950"></span>
+          <span class="label">JobTracker — Application form · with PDF extraction</span>
+        </div>
+        <img src="screenshots/application-form.png" alt="JobTracker application form with PDF extraction and skill tracking" loading="lazy" />
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="section" style="padding-top:8px; padding-bottom:16px;">
+    <div class="maxw">
+      <div class="head" style="margin-bottom:34px;">
+        <div class="overline">What it does</div>
+        <h2>Three things, done properly</h2>
+      </div>
+      <div class="features">
+        <div class="fcard reveal">
+          <div class="ico teal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 4v16"/><rect x="4.7" y="7" width="2.6" height="4" rx="0.7" fill="currentColor" stroke="none"/><rect x="10.7" y="7" width="2.6" height="6.5" rx="0.7" fill="currentColor" stroke="none"/><rect x="16.7" y="7" width="2.6" height="3" rx="0.7" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <h3>Kanban board</h3>
+          <p>Move applications Applied → Interview → Offer, or flip to a sortable table — one click toggles the view.</p>
+        </div>
+        <div class="fcard reveal">
+          <div class="ico violet">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M12.2 2.3 6.1 4.1c-.5.15-.86.55-.95 1.05L3.9 11.2c-.08.46.07.93.4 1.25l5.9 5.6c.6.57 1.57.43 1.98-.28l4.7-8.1c.22-.38.25-.84.08-1.25l-2.6-6.0a1.3 1.3 0 0 0-2.04-.55Z" fill="#9684EC"/><path d="M12.2 2.3 6.1 4.1c-.5.15-.86.55-.95 1.05L3.9 11.2c-.08.46.07.93.4 1.25l5.9 5.6 1.6-7.2-1.6-8.55Z" fill="#7C66E0"/><path d="m9.7 10.85 2.2-7.6 3.8 5.9-6 1.7Z" fill="#5F49C4" opacity=".55"/></svg>
+          </div>
+          <h3>Obsidian sync</h3>
+          <p>Each application writes a structured markdown file to your vault — with a protected User Notes section that survives every re-sync.</p>
+        </div>
+        <div class="fcard reveal">
+          <div class="ico teal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><text x="11.6" y="17.8" font-family="var(--font-mono), monospace" font-size="5.4" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle">PDF</text></svg>
+          </div>
+          <h3>PDF extraction</h3>
+          <p>Drop a job posting PDF and the app pulls the description and company name straight into a new application.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section id="architecture" class="section" style="padding-top:36px; padding-bottom:44px;">
+    <div class="maxw arch reveal">
+      <div class="arch-head">
+        <h3>Built like production software</h3>
+        <span class="tag">Clean Architecture · MVVM</span>
+      </div>
+      <div class="layers">
+        <div class="layer"><div class="t">Domain</div><div class="d">Entities, enums, repository contracts</div></div>
+        <div class="layer"><div class="t">Application</div><div class="d">Services, DTOs, use-case interfaces</div></div>
+        <div class="layer"><div class="t">Infrastructure</div><div class="d">SQLite · Dapper · markdown · PDF</div></div>
+        <div class="layer"><div class="t">WPF</div><div class="d">XAML views, ViewModels, converters</div></div>
+      </div>
+      <div class="chips">
+        <span class="chip">xUnit test suite</span>
+        <span class="chip">SQLite + Dapper</span>
+        <span class="chip">26 skills pre-seeded</span>
+        <span class="chip">Dark theme</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL NOTE -->
+  <section class="section" style="padding-bottom:44px;">
+    <div class="maxw head">
+      <div class="overline">Get started</div>
+      <h2>Download &amp; run — no installer</h2>
+      <div class="note">
+        Grab the latest <code>JobTracker.exe</code> from the
+        <a href="https://github.com/juandresrodca/job-application-tracker/releases/latest" style="color:var(--accent-2)" target="_blank" rel="noopener">Releases page</a>,
+        double-click, and it creates your local database on first launch.
+        <br/><br/>
+        <strong>Beta note:</strong> the download is currently <strong>unsigned</strong>, so Windows SmartScreen may show a
+        “Windows protected your PC” prompt the first time — click <strong>More info → Run anyway</strong>. Code signing is planned after the beta.
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="foot maxw">
+    <span>JobTracker · MIT licensed</span>
+    <span class="mono">Built with .NET 8 · WPF</span>
+  </footer>
+
+  <script>
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Per-letter "diffuse" animation on the hero title + subtitle (mirrors the Claude design).
+    // A shared index across all targets staggers the wave, like the original makeLine().
+    if (!reduce) {
+      var idx = 0;
+      document.querySelectorAll('[data-diffuse]').forEach(function (el) {
+        var words = el.textContent.split(' ');
+        el.textContent = '';
+        words.forEach(function (word, wi) {
+          var w = document.createElement('span');
+          w.style.display = 'inline-block';
+          w.style.whiteSpace = 'nowrap';        // keep words from breaking mid-letter
+          for (var i = 0; i < word.length; i++) {
+            var c = document.createElement('span');
+            c.textContent = word[i];
+            c.style.display = 'inline-block';
+            c.style.whiteSpace = 'pre';
+            c.style.animation = 'jt-diffuse 11s ease-in-out infinite';
+            c.style.animationDelay = (idx * 0.011) + 's';
+            c.style.willChange = 'opacity, filter, transform';
+            w.appendChild(c);
+            idx++;
+          }
+          el.appendChild(w);
+          if (wi < words.length - 1) { el.appendChild(document.createTextNode(' ')); idx++; }
+        });
+      });
+    }
+
+    // Scroll-reveal: fade/rise sections in as they enter the viewport.
+    var els = document.querySelectorAll('.reveal');
+    if (!reduce && 'IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.12 });
+      els.forEach(function (el) { io.observe(el); });
+    } else {
+      els.forEach(function (el) { el.classList.add('in'); });
+    }
+  })();
+  </script>
+
+</body>
+</html>

@@ -20,19 +20,16 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore JobTracker.sln
-        working-directory: JobTracker
 
       - name: Build (Release)
         run: dotnet build JobTracker.sln --no-restore --configuration Release
-        working-directory: JobTracker
 
       - name: Run tests
         run: dotnet test JobTracker.sln --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
-        working-directory: JobTracker
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
-          path: JobTracker/**/TestResults/*.trx
+          path: '**/TestResults/*.trx'
