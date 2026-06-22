@@ -19,7 +19,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore JobTracker.sln
+        run: dotnet restore JobTracker.sln --configuration Release
 
       - name: Build (Release)
         run: dotnet build JobTracker.sln --no-restore --configuration Release
