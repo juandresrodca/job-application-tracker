@@ -21,16 +21,6 @@ public class BoolToVisibilityConverter : IValueConverter
         => value is Visibility.Visible;
 }
 
-[ValueConversion(typeof(bool), typeof(Visibility))]
-public class InverseBoolToVisibilityConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is true ? Visibility.Collapsed : Visibility.Visible;
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is Visibility.Collapsed;
-}
-
 [ValueConversion(typeof(object), typeof(Visibility))]
 public class NullToVisibilityConverter : IValueConverter
 {
@@ -44,8 +34,18 @@ public class NullToVisibilityConverter : IValueConverter
 [ValueConversion(typeof(bool), typeof(SolidColorBrush))]
 public class BoolToBrushConverter : IValueConverter
 {
+    private static readonly SolidColorBrush TrueBrush = CreateFrozenBrush(248, 81, 73);
+    private static readonly SolidColorBrush FalseBrush = CreateFrozenBrush(48, 54, 61);
+
+    private static SolidColorBrush CreateFrozenBrush(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is true ? new SolidColorBrush(Color.FromRgb(248, 81, 73)) : new SolidColorBrush(Color.FromRgb(48, 54, 61));
+        => value is true ? TrueBrush : FalseBrush;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotImplementedException();
@@ -54,24 +54,31 @@ public class BoolToBrushConverter : IValueConverter
 [ValueConversion(typeof(ApplicationStatus), typeof(SolidColorBrush))]
 public class StatusToColorConverter : IValueConverter
 {
-    private static readonly Dictionary<ApplicationStatus, Color> Colors = new()
+    private static readonly Dictionary<ApplicationStatus, SolidColorBrush> BrushCache = new()
     {
-        [ApplicationStatus.Applied]       = Color.FromRgb(31,  111, 235),  // blue
-        [ApplicationStatus.Screening]     = Color.FromRgb(130, 80,  255),  // purple
-        [ApplicationStatus.Interview]     = Color.FromRgb(227, 179, 65),   // yellow
-        [ApplicationStatus.TechnicalTest] = Color.FromRgb(249, 115, 22),   // orange
-        [ApplicationStatus.Offer]         = Color.FromRgb(63,  185, 80),   // green
-        [ApplicationStatus.Accepted]      = Color.FromRgb(22,  163, 74),   // dark green
-        [ApplicationStatus.Rejected]      = Color.FromRgb(248, 81,  73),   // red
-        [ApplicationStatus.Withdrawn]     = Color.FromRgb(72,  79,  88),   // grey
+        [ApplicationStatus.Applied]       = CreateFrozenBrush(31,  111, 235),  // blue
+        [ApplicationStatus.Screening]     = CreateFrozenBrush(130, 80,  255),  // purple
+        [ApplicationStatus.Interview]     = CreateFrozenBrush(227, 179, 65),   // yellow
+        [ApplicationStatus.TechnicalTest] = CreateFrozenBrush(249, 115, 22),   // orange
+        [ApplicationStatus.Offer]         = CreateFrozenBrush(63,  185, 80),   // green
+        [ApplicationStatus.Accepted]      = CreateFrozenBrush(22,  163, 74),   // dark green
+        [ApplicationStatus.Rejected]      = CreateFrozenBrush(248, 81,  73),   // red
+        [ApplicationStatus.Withdrawn]     = CreateFrozenBrush(72,  79,  88),   // grey
     };
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    private static readonly SolidColorBrush DefaultBrush = CreateFrozenBrush(72, 79, 88);
+
+    private static SolidColorBrush CreateFrozenBrush(byte r, byte g, byte b)
     {
-        if (value is ApplicationStatus status && Colors.TryGetValue(status, out var color))
-            return new SolidColorBrush(color);
-        return new SolidColorBrush(Color.FromRgb(72, 79, 88));
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
     }
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is ApplicationStatus status && BrushCache.TryGetValue(status, out var brush)
+            ? brush
+            : DefaultBrush;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotImplementedException();

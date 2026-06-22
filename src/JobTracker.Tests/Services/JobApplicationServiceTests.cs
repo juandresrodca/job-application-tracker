@@ -57,7 +57,7 @@ public class JobApplicationServiceTests
         var request = new CreateJobApplicationRequest(
             "Software Engineer", "Description", 1, null,
             ApplicationStatus.Applied, DateTime.Today,
-            false, null, null, null, new List<int>(), null);
+            false, null, null, null, new List<int>());
 
         var dto = await sut.CreateAsync(request);
 
@@ -76,7 +76,7 @@ public class JobApplicationServiceTests
         var request = new CreateJobApplicationRequest(
             "  Software Engineer  ", "Desc", 1, null,
             ApplicationStatus.Applied, DateTime.Today,
-            false, null, null, null, new List<int>(), null);
+            false, null, null, null, new List<int>());
 
         await sut.CreateAsync(request);
 
@@ -91,7 +91,7 @@ public class JobApplicationServiceTests
         _repoMock.Setup(r => r.GetWithDetailsAsync(42)).ReturnsAsync(entity);
 
         var sut = CreateSut();
-        var result = await sut.GetApplicationByIdAsync(42);
+        var result = await sut.GetByIdAsync(42);
 
         result.Should().NotBeNull();
         result!.RoleName.Should().Be("Software Engineer");
@@ -168,18 +168,18 @@ public class JobApplicationServiceTests
             .Setup(s => s.SyncApplicationAsync(It.IsAny<int>()))
             .ReturnsAsync(new SyncResult(false, "Vault not found"));
 
-        var sut = CreateSut();
+        // Construct directly — CreateSut() would overwrite the failure mock setup above.
+        var sut = new JobApplicationService(_repoMock.Object, _syncMock.Object);
         string? warningReceived = null;
         sut.SyncWarning += msg => warningReceived = msg;
 
         var request = new CreateJobApplicationRequest(
             "Role", "Desc", 1, null, ApplicationStatus.Applied, DateTime.Today,
-            false, null, null, null, new List<int>(), null);
+            false, null, null, null, new List<int>());
 
         await sut.CreateAsync(request);
 
-        // Give the fire-and-forget task time to complete
-        await Task.Delay(200);
+        await Task.Delay(500);
         warningReceived.Should().Contain("Vault not found");
     }
 }

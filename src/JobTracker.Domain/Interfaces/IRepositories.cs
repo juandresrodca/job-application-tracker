@@ -17,6 +17,7 @@ public interface IJobApplicationRepository : IRepository<JobApplication>
     Task<IEnumerable<JobApplication>> GetByStatusAsync(Domain.Enums.ApplicationStatus status);
     Task<IEnumerable<JobApplication>> GetByCompanyAsync(int companyId);
     Task<JobApplication?> GetWithDetailsAsync(int id); // Includes Company, Contact, Skills
+    Task<IEnumerable<JobApplication>> GetAllWithDetailsAsync(); // Loads all with Company, Contact, Skills (no N+1)
 }
 
 public interface ICompanyRepository : IRepository<Company>

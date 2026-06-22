@@ -202,11 +202,11 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
             // Update week number in case the app crossed a week boundary
             UpdateCurrentWeekNumber();
 
-            var all = (await _appService.GetAllApplicationsAsync()).ToList();
-            var week = (await _appService.GetCurrentWeekApplicationsAsync()).ToList();
-
-            // Use the appropriate dataset based on view mode
-            var source = IsWeekView ? week : all;
+            // Load only the required dataset based on view mode
+            var source = IsWeekView
+                ? (await _appService.GetCurrentWeekApplicationsAsync()).ToList()
+                : (await _appService.GetAllApplicationsAsync()).ToList();
+            var all = IsWeekView ? source : null;
 
             Applications.Clear();
             foreach (var app in source)
@@ -236,7 +236,7 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
             if (IsWeekView)
                 StatusMessage = $"Loaded {source.Count} applications this week";
             else
-                StatusMessage = $"Loaded {all.Count} applications total";
+                StatusMessage = $"Loaded {source.Count} applications total";
         }
         catch (Exception ex)
         {

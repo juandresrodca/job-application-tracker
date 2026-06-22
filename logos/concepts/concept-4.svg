@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512">
+
+  <!-- Background -->
+  <rect width="1024" height="512" fill="#0F1117"/>
+
+  <!-- Icon: centered in left 512px zone at (256, 256) -->
+  <g id="icon">
+    <!-- Outer ring -->
+    <circle cx="256" cy="256" r="95" fill="none" stroke="#F85149" stroke-width="10"/>
+    <!-- Middle ring -->
+    <circle cx="256" cy="256" r="62" fill="none" stroke="#8B949E" stroke-width="10"/>
+    <!-- Horizontal crosshair line through center (from outer to inner) -->
+    <line x1="161" y1="256" x2="226" y2="256" stroke="#30363D" stroke-width="4"/>
+    <line x1="286" y1="256" x2="351" y2="256" stroke="#30363D" stroke-width="4"/>
+    <!-- Inner filled circle -->
+    <circle cx="256" cy="256" r="30" fill="#3FB950"/>
+    <!-- Center highlight dot -->
+    <circle cx="256" cy="256" r="6" fill="#E6EDF3"/>
+  </g>
+
+  <!-- Wordmark: right half, baseline at y=270 -->
+  <g id="wordmark">
+    <text
+      x="560"
+      y="270"
+      font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+      font-size="72"
+      font-weight="300"
+      fill="#8B949E"
+      dominant-baseline="auto"
+      text-anchor="start">Job</text>
+    <text
+      x="700"
+      y="270"
+      font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+      font-size="72"
+      font-weight="700"
+      fill="#E6EDF3"
+      dominant-baseline="auto"
+      text-anchor="start">Tracker</text>
+  </g>
+
+</svg>

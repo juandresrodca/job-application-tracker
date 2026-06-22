@@ -6,6 +6,7 @@
         Height="800" Width="1280"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Resources/Images/app.ico"
         Background="{StaticResource BackgroundBrush}">
 
     <Window.InputBindings>
@@ -29,11 +30,32 @@
             <DockPanel>
                 <!-- Logo / Title -->
                 <StackPanel DockPanel.Dock="Top" Margin="16,24,16,32">
-                    <TextBlock Text="📋" FontSize="32" HorizontalAlignment="Center"/>
+                    <!-- Logo: Bullseye target icon -->
+                    <Viewbox Width="56" Height="56" HorizontalAlignment="Center" Margin="0,0,0,8">
+                        <Canvas Width="200" Height="200">
+                            <!-- Outer ring - Red -->
+                            <Ellipse Canvas.Left="5" Canvas.Top="5" Width="190" Height="190"
+                                    Stroke="#F85149" StrokeThickness="8" Fill="Transparent"/>
+                            <!-- Middle ring - Gray -->
+                            <Ellipse Canvas.Left="38" Canvas.Top="38" Width="124" Height="124"
+                                    Stroke="#8B949E" StrokeThickness="8" Fill="Transparent"/>
+                            <!-- Horizontal line left -->
+                            <Line X1="5" Y1="100" X2="65" Y2="100" Stroke="#30363D" StrokeThickness="4"/>
+                            <!-- Horizontal line right -->
+                            <Line X1="135" Y1="100" X2="195" Y2="100" Stroke="#30363D" StrokeThickness="4"/>
+                            <!-- Inner circle - Green -->
+                            <Ellipse Canvas.Left="70" Canvas.Top="70" Width="60" Height="60"
+                                    Fill="#3FB950"/>
+                            <!-- Center dot - White -->
+                            <Ellipse Canvas.Left="94" Canvas.Top="94" Width="12" Height="12"
+                                    Fill="#E6EDF3"/>
+                        </Canvas>
+                    </Viewbox>
+
                     <TextBlock Text="Job Tracker"
                                Style="{StaticResource TitleText}"
                                HorizontalAlignment="Center"
-                               Margin="0,8,0,0"/>
+                               Margin="0,0,0,0"/>
                     <TextBlock Text="{Binding WeekInfo}"
                                Style="{StaticResource SubtleText}"
                                HorizontalAlignment="Center"/>
@@ -66,6 +88,12 @@
                             Command="{Binding NavigateCommand}"
                             CommandParameter="Settings"/>
                 </StackPanel>
+
+                <!-- Help button -->
+                <Button DockPanel.Dock="Bottom" Content="❓ Help"
+                        Style="{StaticResource NavButton}"
+                        Command="{Binding HelpCommand}"
+                        Margin="8,0,8,8"/>
 
                 <!-- Stats summary at the bottom of sidebar -->
                 <Border DockPanel.Dock="Bottom" Margin="8,0,8,16"

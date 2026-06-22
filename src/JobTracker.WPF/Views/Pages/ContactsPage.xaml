@@ -51,13 +51,38 @@
                       Style="{StaticResource MainDataGrid}"
                       ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                       AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserResizeColumns="False" CanUserResizeRows="False"
                       SelectionMode="Single" GridLinesVisibility="Horizontal"
                       Margin="0,0,8,0">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name"    Binding="{Binding Name}"       Width="*" MinWidth="120"/>
-                    <DataGridTextColumn Header="Role"    Binding="{Binding Role}"        Width="130"/>
-                    <DataGridTextColumn Header="Email"   Binding="{Binding Email}"       Width="180"/>
-                    <DataGridTextColumn Header="LinkedIn" Binding="{Binding LinkedInUrl}" Width="200"/>
+                    <DataGridTemplateColumn Header="Name" Width="*" MinWidth="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Role" Width="130">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Role}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Role}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Email" Width="180">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Email}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Email}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="LinkedIn" Width="200">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding LinkedInUrl}" TextTrimming="CharacterEllipsis" ToolTip="{Binding LinkedInUrl}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
 

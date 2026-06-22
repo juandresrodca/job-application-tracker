@@ -19,6 +19,69 @@ public class JobApplicationRepository : IJobApplicationRepository
             "SELECT * FROM JobApplications WHERE Id = @id", new { id });
     }
 
+    public async Task<IEnumerable<JobApplication>> GetAllWithDetailsAsync()
+    {
+        using var conn = _db.CreateConnection();
+
+        // Load all applications with company and contact in one query
+        var applicationsDict = new Dictionary<int, JobApplication>();
+
+        var sql = """
+            SELECT ja.Id, ja.RoleName, ja.JobDescription, ja.Status, ja.AppliedDate, ja.LastUpdated,
+                   ja.JobPostingUrl, ja.SalaryRange, ja.IsRemote, ja.Notes, ja.CompanyId, ja.ContactId,
+                   c.Id as CId, c.Name, c.Website, c.Industry, c.Location, c.Notes as CNotes,
+                   ct.Id as CtId, ct.Name as CtName, ct.Email, ct.Phone, ct.LinkedInUrl, ct.Role as CtRole, ct.Notes as CtNotes, ct.CompanyId as CtCompanyId
+            FROM JobApplications ja
+            JOIN Companies c ON c.Id = ja.CompanyId
+            LEFT JOIN Contacts ct ON ct.Id = ja.ContactId
+            ORDER BY ja.AppliedDate DESC
+            """;
+
+        await conn.QueryAsync<JobApplication, Company, Contact, JobApplication>(
+            sql,
+            (ja, c, ct) =>
+            {
+                ja.Company = c;
+                ja.Contact = ct;
+                applicationsDict[ja.Id] = ja;
+                return ja;
+            },
+            splitOn: "CId,CtId");
+
+        // Load all application skills in one query and map to applications
+        var skillsSql = """
+            SELECT aps.JobApplicationId, aps.SkillId, aps.IsOwned, aps.IsRequired, s.Id, s.Name, s.Category
+            FROM ApplicationSkills aps
+            JOIN Skills s ON s.Id = aps.SkillId
+            """;
+
+        await conn.QueryAsync<ApplicationSkill, Skill, ApplicationSkill>(
+            skillsSql,
+            (aps, s) => { aps.Skill = s; return aps; },
+            splitOn: "Id");
+
+        // Now populate skills for each application
+        foreach (var appId in applicationsDict.Keys)
+        {
+            var skillsSql2 = """
+                SELECT aps.JobApplicationId, aps.SkillId, aps.IsOwned, aps.IsRequired, s.Id, s.Name, s.Category
+                FROM ApplicationSkills aps
+                JOIN Skills s ON s.Id = aps.SkillId
+                WHERE aps.JobApplicationId = @appId
+                """;
+
+            var skills = await conn.QueryAsync<ApplicationSkill, Skill, ApplicationSkill>(
+                skillsSql2,
+                (aps, s) => { aps.Skill = s; return aps; },
+                new { appId },
+                splitOn: "Id");
+
+            applicationsDict[appId].ApplicationSkills = skills.ToList();
+        }
+
+        return applicationsDict.Values;
+    }
+
     public async Task<JobApplication?> GetWithDetailsAsync(int id)
     {
         using var conn = _db.CreateConnection();
@@ -55,8 +118,12 @@ public class JobApplicationRepository : IJobApplicationRepository
     {
         using var conn = _db.CreateConnection();
 
+        // Explicitly list all columns with proper aliases to avoid ambiguous Id mappings
         var sql = """
-            SELECT ja.*, c.*, ct.*
+            SELECT ja.Id, ja.RoleName, ja.JobDescription, ja.Status, ja.AppliedDate, ja.LastUpdated,
+                   ja.JobPostingUrl, ja.SalaryRange, ja.IsRemote, ja.Notes, ja.CompanyId, ja.ContactId,
+                   c.Id as CId, c.Name, c.Website, c.Industry, c.Location, c.Notes as CNotes,
+                   ct.Id as CtId, ct.Name as CtName, ct.Email, ct.Phone, ct.LinkedInUrl, ct.Role as CtRole, ct.Notes as CtNotes, ct.CompanyId as CtCompanyId
             FROM JobApplications ja
             JOIN Companies c ON c.Id = ja.CompanyId
             LEFT JOIN Contacts ct ON ct.Id = ja.ContactId
@@ -66,7 +133,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         return await conn.QueryAsync<JobApplication, Company, Contact, JobApplication>(
             sql,
             (ja, c, ct) => { ja.Company = c; ja.Contact = ct; return ja; },
-            splitOn: "Id,Id");
+            splitOn: "CId,CtId");
     }
 
     public async Task<IEnumerable<JobApplication>> GetByWeekAsync(int isoWeek, int year)
@@ -85,7 +152,10 @@ public class JobApplicationRepository : IJobApplicationRepository
         var weekEnd = weekStart.AddDays(7);
 
         var sql = """
-            SELECT ja.*, c.*, ct.*
+            SELECT ja.Id, ja.RoleName, ja.JobDescription, ja.Status, ja.AppliedDate, ja.LastUpdated,
+                   ja.JobPostingUrl, ja.SalaryRange, ja.IsRemote, ja.Notes, ja.CompanyId, ja.ContactId,
+                   c.Id as CId, c.Name, c.Website, c.Industry, c.Location, c.Notes as CNotes,
+                   ct.Id as CtId, ct.Name as CtName, ct.Email, ct.Phone, ct.LinkedInUrl, ct.Role as CtRole, ct.Notes as CtNotes, ct.CompanyId as CtCompanyId
             FROM JobApplications ja
             JOIN Companies c ON c.Id = ja.CompanyId
             LEFT JOIN Contacts ct ON ct.Id = ja.ContactId
@@ -98,7 +168,7 @@ public class JobApplicationRepository : IJobApplicationRepository
             sql,
             (ja, c, ct) => { ja.Company = c; ja.Contact = ct; return ja; },
             new { weekStart, weekEnd },
-            splitOn: "Id,Id");
+            splitOn: "CId,CtId");
     }
 
     public async Task<IEnumerable<JobApplication>> GetByStatusAsync(ApplicationStatus status)
@@ -106,7 +176,10 @@ public class JobApplicationRepository : IJobApplicationRepository
         using var conn = _db.CreateConnection();
 
         var sql = """
-            SELECT ja.*, c.*, ct.*
+            SELECT ja.Id, ja.RoleName, ja.JobDescription, ja.Status, ja.AppliedDate, ja.LastUpdated,
+                   ja.JobPostingUrl, ja.SalaryRange, ja.IsRemote, ja.Notes, ja.CompanyId, ja.ContactId,
+                   c.Id as CId, c.Name, c.Website, c.Industry, c.Location, c.Notes as CNotes,
+                   ct.Id as CtId, ct.Name as CtName, ct.Email, ct.Phone, ct.LinkedInUrl, ct.Role as CtRole, ct.Notes as CtNotes, ct.CompanyId as CtCompanyId
             FROM JobApplications ja
             JOIN Companies c ON c.Id = ja.CompanyId
             LEFT JOIN Contacts ct ON ct.Id = ja.ContactId
@@ -118,7 +191,7 @@ public class JobApplicationRepository : IJobApplicationRepository
             sql,
             (ja, c, ct) => { ja.Company = c; ja.Contact = ct; return ja; },
             new { status = (int)status },
-            splitOn: "Id,Id");
+            splitOn: "CId,CtId");
     }
 
     public async Task<IEnumerable<JobApplication>> GetByCompanyAsync(int companyId)

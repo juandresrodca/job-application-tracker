@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Outer ring -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="#F85149" stroke-width="10"/>
+  <!-- Middle ring -->
+  <circle cx="100" cy="100" r="62" fill="none" stroke="#8B949E" stroke-width="10"/>
+  <!-- Horizontal crosshair line through center -->
+  <line x1="5" y1="100" x2="70" y2="100" stroke="#30363D" stroke-width="4"/>
+  <line x2="195" y1="100" x1="130" y2="100" stroke="#30363D" stroke-width="4"/>
+  <!-- Inner filled circle -->
+  <circle cx="100" cy="100" r="30" fill="#3FB950"/>
+  <!-- Center highlight dot -->
+  <circle cx="100" cy="100" r="6" fill="#E6EDF3"/>
+</svg>

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Xunit;
+using System.IO;
 using JobTracker.Application.Interfaces;
 using JobTracker.Infrastructure.Pdf;
 

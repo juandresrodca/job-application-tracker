@@ -127,11 +127,24 @@
                   Style="{StaticResource MainDataGrid}"
                   ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                   AutoGenerateColumns="False" IsReadOnly="True"
+                  CanUserResizeColumns="False" CanUserResizeRows="False"
                   SelectionMode="Single" GridLinesVisibility="Horizontal"
-                  Visibility="{Binding IsKanbanView, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                  Visibility="{Binding IsKanbanView, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Role"    Binding="{Binding RoleName}"    Width="*" MinWidth="120"/>
-                <DataGridTextColumn Header="Company" Binding="{Binding CompanyName}" Width="140"/>
+                <DataGridTemplateColumn Header="Role" Width="*" MinWidth="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding RoleName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding RoleName}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Company" Width="140">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding CompanyName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding CompanyName}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="Status" Width="120">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -142,11 +155,41 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Applied" Binding="{Binding AppliedDate, StringFormat='yyyy-MM-dd'}" Width="100"/>
-                <DataGridTextColumn Header="Days"    Binding="{Binding DaysSinceApplication}" Width="60"/>
-                <DataGridTextColumn Header="Contact" Binding="{Binding ContactName}"  Width="130"/>
-                <DataGridTextColumn Header="Remote"  Binding="{Binding IsRemote}"     Width="70"/>
-                <DataGridTextColumn Header="Salary"  Binding="{Binding SalaryRange}"  Width="110"/>
+                <DataGridTemplateColumn Header="Applied" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding AppliedDate, StringFormat='yyyy-MM-dd'}" TextTrimming="CharacterEllipsis" ToolTip="{Binding AppliedDate, StringFormat='yyyy-MM-dd'}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Days" Width="60">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DaysSinceApplication}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DaysSinceApplication}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Contact" Width="130">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ContactName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ContactName}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Remote" Width="70">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding IsRemote}" TextTrimming="CharacterEllipsis" ToolTip="{Binding IsRemote}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Salary" Width="110">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding SalaryRange}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SalaryRange}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="Actions" Width="140">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -183,6 +226,9 @@
                                 Background="{StaticResource SurfaceBrush}"
                                 BorderBrush="{StaticResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="8">
+                            <Border.Effect>
+                                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="3" BlurRadius="12" Opacity="0.4"/>
+                            </Border.Effect>
                             <DockPanel>
                                 <Border DockPanel.Dock="Top"
                                         Background="{StaticResource CardBrush}"

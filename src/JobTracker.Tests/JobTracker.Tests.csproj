@@ -1,9 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,5 +23,6 @@
     <ProjectReference Include="..\JobTracker.Application\JobTracker.Application.csproj"/>
     <ProjectReference Include="..\JobTracker.Infrastructure\JobTracker.Infrastructure.csproj"/>
     <ProjectReference Include="..\JobTracker.Domain\JobTracker.Domain.csproj"/>
+    <ProjectReference Include="..\JobTracker.WPF\JobTracker.WPF.csproj"/>
   </ItemGroup>
 </Project>

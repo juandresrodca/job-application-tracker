@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Xunit;
+using Microsoft.Data.Sqlite;
 using JobTracker.Domain.Entities;
 using JobTracker.Domain.Enums;
 using JobTracker.Infrastructure.Data;
@@ -14,6 +15,7 @@ namespace JobTracker.Tests.Repositories;
 public class InMemoryRepositoryTests : IAsyncLifetime
 {
     private DatabaseContext _db = null!;
+    private SqliteConnection _keepAlive = null!;
     private CompanyRepository _companyRepo = null!;
     private ContactRepository _contactRepo = null!;
     private SkillRepository _skillRepo = null!;
@@ -21,7 +23,12 @@ public class InMemoryRepositoryTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _db = new DatabaseContext(":memory:");
+        // Named shared-cache in-memory DB: all connections with the same name share the schema.
+        var dbName = $"testdb_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+        _db = new DatabaseContext(dbName);
+        // Hold one connection open so the named in-memory database survives across repository calls.
+        _keepAlive = _db.CreateConnection();
+        await _keepAlive.OpenAsync();
         await _db.InitializeAsync();
 
         _companyRepo = new CompanyRepository(_db);
@@ -30,7 +37,11 @@ public class InMemoryRepositoryTests : IAsyncLifetime
         _appRepo     = new JobApplicationRepository(_db);
     }
 
-    public Task DisposeAsync() => Task.CompletedTask;
+    public Task DisposeAsync()
+    {
+        _keepAlive.Dispose();
+        return Task.CompletedTask;
+    }
 
     // ── Company ──────────────────────────────────────────────────────────────
 
@@ -76,7 +87,7 @@ public class InMemoryRepositoryTests : IAsyncLifetime
         await _contactRepo.AddAsync(new Contact { Name = "Jane Doe", CompanyId = company.Id, Email = "jane@meta.com" });
         await _contactRepo.AddAsync(new Contact { Name = "John Smith", CompanyId = company.Id });
 
-        var contacts = (await _contactRepo.GetByCompanyIdAsync(company.Id)).ToList();
+        var contacts = (await _contactRepo.GetByCompanyAsync(company.Id)).ToList();
 
         contacts.Should().HaveCount(2);
         contacts.Should().Contain(c => c.Name == "Jane Doe");

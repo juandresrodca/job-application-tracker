@@ -51,11 +51,24 @@
                       Style="{StaticResource MainDataGrid}"
                       ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                       AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserResizeColumns="False" CanUserResizeRows="False"
                       SelectionMode="Single" GridLinesVisibility="Horizontal"
                       Margin="0,0,8,0">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Skill Name" Binding="{Binding Name}"     Width="*" MinWidth="140"/>
-                    <DataGridTextColumn Header="Category"   Binding="{Binding Category}" Width="160"/>
+                    <DataGridTemplateColumn Header="Skill Name" Width="*" MinWidth="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Category" Width="160">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Category}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Category}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
 

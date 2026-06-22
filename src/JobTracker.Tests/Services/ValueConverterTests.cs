@@ -18,17 +18,17 @@ public class ValueConverterTests
     public void BoolToVisibilityConverter_ConvertsCorrectly(bool input, Visibility expected)
     {
         var converter = new BoolToVisibilityConverter();
-        var result = converter.Convert(input, typeof(Visibility), null, CultureInfo.InvariantCulture);
+        var result = converter.Convert(input, typeof(Visibility), string.Empty, CultureInfo.InvariantCulture);
         result.Should().Be(expected);
     }
 
     [Theory]
     [InlineData(true, Visibility.Collapsed)]
     [InlineData(false, Visibility.Visible)]
-    public void InverseBoolToVisibilityConverter_ConvertsCorrectly(bool input, Visibility expected)
+    public void BoolToVisibilityConverter_WithInverseParameter_ConvertsCorrectly(bool input, Visibility expected)
     {
-        var converter = new InverseBoolToVisibilityConverter();
-        var result = converter.Convert(input, typeof(Visibility), null, CultureInfo.InvariantCulture);
+        var converter = new BoolToVisibilityConverter();
+        var result = converter.Convert(input, typeof(Visibility), "inverse", CultureInfo.InvariantCulture);
         result.Should().Be(expected);
     }
 
@@ -36,7 +36,7 @@ public class ValueConverterTests
     public void NullToVisibilityConverter_ReturnsCollapsed_ForNull()
     {
         var converter = new NullToVisibilityConverter();
-        var result = converter.Convert(null, typeof(Visibility), null, CultureInfo.InvariantCulture);
+        var result = converter.Convert(null, typeof(Visibility), string.Empty, CultureInfo.InvariantCulture);
         result.Should().Be(Visibility.Collapsed);
     }
 
@@ -44,7 +44,7 @@ public class ValueConverterTests
     public void NullToVisibilityConverter_ReturnsVisible_ForObject()
     {
         var converter = new NullToVisibilityConverter();
-        var result = converter.Convert(new object(), typeof(Visibility), null, CultureInfo.InvariantCulture);
+        var result = converter.Convert(new object(), typeof(Visibility), string.Empty, CultureInfo.InvariantCulture);
         result.Should().Be(Visibility.Visible);
     }
 

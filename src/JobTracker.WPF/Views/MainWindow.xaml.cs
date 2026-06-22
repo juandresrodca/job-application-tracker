@@ -29,6 +29,7 @@ public partial class MainWindow : Window
 
     public ICommand NavigateCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand HelpCommand { get; }
 
     public MainWindow(IServiceProvider services)
     {
@@ -42,6 +43,7 @@ public partial class MainWindow : Window
 
         NavigateCommand = new RelayCommand(Navigate);
         RefreshCommand = new RelayCommand(async () => await RefreshAsync());
+        HelpCommand = new RelayCommand(ShowHelp);
 
         Loaded += async (_, _) =>
         {
@@ -100,6 +102,16 @@ public partial class MainWindow : Window
         {
             WeekStats = "—";
         }
+    }
+
+    private void ShowHelp()
+    {
+        var helpWindow = new HelpWindow
+        {
+            Owner = this,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        helpWindow.ShowDialog();
     }
 
     // Allow navigation to an edit form from other pages

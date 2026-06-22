@@ -24,13 +24,11 @@ Format: [Keep a Changelog](https://keepachangelog.com) · Versioning: [SemVer](h
 - `CONTRIBUTING.md`, `CHANGELOG.md`, issue templates
 
 ### Fixed
-- **API key now encrypted** with Windows DPAPI (`ProtectedData`, `CurrentUser` scope) — no longer stored in plaintext
 - **Obsidian sync errors surfaced to UI** — `SyncWarning` event propagates failures to the status bar instead of silently discarding them
-- `PasswordBox` binding already wired in code-behind (confirmed working)
 - `InverseBoolToVisibilityConverter` added for kanban/table view toggle
 
-### Security
-- `AiApiKey` encrypted at rest via DPAPI — legacy plaintext keys auto-migrated on first load
+### Removed
+- AI CV-analysis features (OpenRouter / Ollama integration) removed for Beta 1 — planned for a future release
 - Added `settings.json` and `publish/` to `.gitignore`
 
 ---

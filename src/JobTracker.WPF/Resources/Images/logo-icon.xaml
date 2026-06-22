@@ -1,0 +1,58 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Logo Icon as DrawingBrush -->
+    <DrawingImage x:Key="LogoIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <!-- Outer ring - Red -->
+                <GeometryDrawing Brush="Transparent" Pen="{StaticResource {x:Static SystemColors.ControlBrushKey}}">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="100,100" RadiusX="95" RadiusY="95"/>
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#F85149" Thickness="10"/>
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+
+                <!-- Middle ring - Gray -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="100,100" RadiusX="62" RadiusY="62"/>
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#8B949E" Thickness="10"/>
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+
+                <!-- Horizontal lines -->
+                <GeometryDrawing Pen="{Pen Brush='#30363D' Thickness='4'}">
+                    <GeometryDrawing.Geometry>
+                        <LineGeometry StartPoint="5,100" EndPoint="70,100"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <GeometryDrawing Pen="{Pen Brush='#30363D' Thickness='4'}">
+                    <GeometryDrawing.Geometry>
+                        <LineGeometry StartPoint="130,100" EndPoint="195,100"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <!-- Inner circle - Green -->
+                <GeometryDrawing Brush="#3FB950">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="100,100" RadiusX="30" RadiusY="30"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+                <!-- Center dot - White -->
+                <GeometryDrawing Brush="#E6EDF3">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="100,100" RadiusX="6" RadiusY="6"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+</ResourceDictionary>

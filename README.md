@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue?logo=windows)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Version](https://img.shields.io/badge/version-0.1.0--beta-orange)
-![Build](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)
+![Build](https://github.com/juandresrodca/job-application-tracker/actions/workflows/ci.yml/badge.svg)
 
 A production-quality .NET 8 WPF desktop application for tracking job applications with Obsidian vault sync.
 
@@ -162,16 +162,72 @@ The app auto-creates:
 - `%APPDATA%\JobTracker\settings.json` — your preferences
 - 26 default IT/security skills pre-seeded
 
-### 3. Configure Obsidian vault sync
+### 3. Configure Obsidian vault sync (optional)
 
-Settings → Browse → select your vault folder root.
+Go to **Settings → Browse** and select your vault folder. See the [full setup guide](#obsidian-vault-sync) below.
 
-Markdown files will be written to:
+---
+
+## Obsidian Vault Sync
+
+Sync automatically writes a structured markdown file for every job application into your Obsidian vault. Notes you write inside the file are never overwritten.
+
+> **Obsidian does not need to be open** — the app writes files directly to the vault folder on disk. Obsidian picks them up the next time it refreshes.
+
+### Setup
+
+**1. Open the Settings page**
+Click **Settings** in the left sidebar (or press `Ctrl+O`).
+
+**2. Set your vault path**
+Click **Browse** next to the *Obsidian Vault Path* field and select the root folder of your vault — the folder that contains your `.obsidian/` directory.
+
+> If you don't have an Obsidian vault yet, create any empty folder and point the app at it. Open that folder as a vault in Obsidian afterwards.
+
+**3. Save**
+Click **Save Settings**. The path is stored in `%APPDATA%\JobTracker\settings.json`.
+
+**4. Trigger a sync**
+Save or update any application. A markdown file is written immediately to your vault. A status-bar message confirms success (or shows an error if the path is unreachable).
+
+---
+
+### Where files are created
+
+Files are written to the vault root with this naming pattern:
+
 ```
-<vault>/<YYYY-MM-DD>_<company>_<role>.md
+<vault>/<YYYY-MM-DD>_<Company>_<Role>.md
 ```
 
-Each file has structured YAML frontmatter + a protected `## User Notes` section that survives re-syncs.
+Example:
+```
+C:\MyVault\2025-04-02_KPMG-Ireland_IT-Infrastructure-Specialist.md
+```
+
+---
+
+### Preserving your notes
+
+Each file contains a `## User Notes` section bounded by HTML comment markers:
+
+```markdown
+## User Notes
+<!-- USER_NOTES_START -->
+Your notes here — write anything.
+<!-- USER_NOTES_END -->
+```
+
+**Everything inside those markers is yours.** Re-syncing the application (e.g. after a status change) updates the frontmatter and structured fields but leaves your notes untouched.
+
+---
+
+### Tips
+
+- The vault folder just needs to **exist on disk** — no Obsidian plugins or configuration required.
+- Works alongside your existing vault notes; files are added without touching anything else.
+- If the vault path is not set or the folder is unreachable, the app continues working normally — sync errors appear in the status bar and are never silent.
+- To stop syncing, clear the vault path in Settings and save.
 
 ---
 
@@ -272,6 +328,14 @@ The `USER_NOTES_START/END` markers protect your manual notes from being overwrit
 - [ ] AI-powered CV improvement suggestions (requires API integration)
 - [ ] Toast/snackbar notifications (currently uses status bar)
 - [ ] ViewModel unit tests require `net8.0-windows` test project (WPF dependency)
+
+---
+
+## Installing the Beta
+
+Download `JobTracker.exe` from the [GitHub Releases](https://github.com/juandresrodca/job-application-tracker/releases) page and run it — no installer needed.
+
+**Windows SmartScreen warning:** Because the EXE is unsigned during beta, Windows will show a *"Windows protected your PC"* prompt on first run. Click **"More info"** then **"Run anyway"** to proceed. This is expected for unsigned executables; code signing is planned for v1.0.
 
 ---
 

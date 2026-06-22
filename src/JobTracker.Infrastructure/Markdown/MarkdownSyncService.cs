@@ -55,13 +55,9 @@ public class MarkdownSyncService : IMarkdownSyncService
         if (string.IsNullOrWhiteSpace(VaultPath) || !Directory.Exists(VaultPath))
             return;
 
-        var apps = await _appRepo.GetAllAsync();
+        var apps = await _appRepo.GetAllWithDetailsAsync();
         foreach (var app in apps)
-        {
-            var full = await _appRepo.GetWithDetailsAsync(app.Id);
-            if (full is not null)
-                await WriteMarkdownAsync(full);
-        }
+            await WriteMarkdownAsync(app);
     }
 
     public async Task<SyncResult> DeleteApplicationFileAsync(string markdownFileName)
@@ -96,17 +92,13 @@ public class MarkdownSyncService : IMarkdownSyncService
         try
         {
             // Step 1: Sync all current applications to markdown files
-            var apps = await _appRepo.GetAllAsync();
+            var apps = await _appRepo.GetAllWithDetailsAsync();
             var appMarkdownFileNames = new HashSet<string>();
 
             foreach (var app in apps)
             {
-                var full = await _appRepo.GetWithDetailsAsync(app.Id);
-                if (full is not null)
-                {
-                    await WriteMarkdownAsync(full);
-                    appMarkdownFileNames.Add(full.MarkdownFileName);
-                }
+                await WriteMarkdownAsync(app);
+                appMarkdownFileNames.Add(app.MarkdownFileName);
             }
 
             // Step 2: Find and delete orphaned markdown files (files that don't correspond to any application)
