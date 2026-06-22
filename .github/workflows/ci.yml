@@ -19,13 +19,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore JobTracker.sln --configuration Release
+        run: dotnet restore JobTracker.sln
 
-      - name: Build (Release)
-        run: dotnet build JobTracker.sln --no-restore --configuration Release
+      - name: Build
+        run: dotnet build JobTracker.sln --no-restore
 
       - name: Run tests
-        run: dotnet test JobTracker.sln --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test JobTracker.sln --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
