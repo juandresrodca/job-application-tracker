@@ -86,7 +86,16 @@ public class JobApplicationService : IJobApplicationService
             entity.ApplicationSkills.Add(new ApplicationSkill { SkillId = sid, JobApplicationId = entity.Id });
 
         await _repo.UpdateAsync(entity);
-        FireAndForgetSync(entity.Id);
+        try
+        {
+            var result = await _markdownSync.SyncApplicationAsync(entity.Id);
+            if (!result.Success)
+                SyncWarning?.Invoke(result.ErrorMessage ?? "Markdown sync failed.");
+        }
+        catch (Exception ex)
+        {
+            SyncWarning?.Invoke($"Markdown sync error: {ex.Message}");
+        }
     }
 
     public async Task DeleteAsync(int id)
