@@ -35,6 +35,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: publish/win-x64/JobTracker.exe
-          generate_release_notes: true
+          body: |
+            ## JobTracker ${{ github.ref_name }}
+
+            A self-contained Windows desktop app for tracking job applications — Kanban board, Obsidian vault sync, and PDF extraction. All data is stored locally, no account required.
+
+            ### Install
+            1. Download `JobTracker.exe` below
+            2. Run it — no installer needed. Data is created at `%APPDATA%\JobTracker` on first launch
+            3. Optional: set your Obsidian vault path in **Settings** (`Ctrl+O`)
+
+            > **Windows SmartScreen:** click _More info → Run anyway_ on first run. The binary is unsigned during beta.
+
+            ### Requirements
+            - Windows 10 / 11 (x64)
+            - No .NET runtime required — fully self-contained
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
