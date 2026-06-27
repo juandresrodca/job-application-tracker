@@ -4,6 +4,7 @@ using JobTracker.Application.Interfaces;
 using JobTracker.Application.Services;
 using JobTracker.Domain.Interfaces;
 using JobTracker.Infrastructure.Data;
+using JobTracker.Infrastructure.Email;
 using JobTracker.Infrastructure.Markdown;
 using JobTracker.Infrastructure.Pdf;
 using JobTracker.Infrastructure.Repositories;
@@ -73,6 +74,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ISettingsService,    SettingsService>();
         services.AddScoped<IMarkdownSyncService,   MarkdownSyncService>();
         services.AddScoped<IPdfExtractionService,  PdfExtractionService>();
+        services.AddScoped<IEmailExtractionService, EmailExtractionService>();
         services.AddScoped<IJobApplicationService, JobApplicationService>();
 
         // ── WPF Services ──────────────────────────────────────────────────

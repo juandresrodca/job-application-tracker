@@ -125,6 +125,9 @@
                             <Button Content="📄 Load from PDF" Command="{Binding LoadFromPdfCommand}"
                                     Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right"
                                     HorizontalAlignment="Right" Padding="8,4"/>
+                            <Button Content="✉ Import from Email" Command="{Binding ShowEmailImportCommand}"
+                                    Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right"
+                                    HorizontalAlignment="Right" Padding="8,4" Margin="0,0,8,0"/>
                         </DockPanel>
                         <TextBox Text="{Binding JobDescription, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource MultiLineTextBox}"
@@ -164,6 +167,36 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
+
+            <!-- Email Import Dialog Overlay -->
+            <Grid Grid.Column="0" Background="#80000000" Visibility="{Binding IsImportingFromEmail, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Border Background="{StaticResource BackgroundBrush}"
+                        BorderBrush="{StaticResource AccentBrush}"
+                        BorderThickness="2"
+                        CornerRadius="8"
+                        MaxWidth="560"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="Import from Email" Style="{StaticResource SectionHeader}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Paste the confirmation email text below (subject line + body)."
+                                   Style="{StaticResource FieldLabel}" Margin="0,0,0,12" Opacity="0.7"/>
+                        <TextBox Text="{Binding EmailText, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MultiLineTextBox}"
+                                 Height="220"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Margin="0,0,0,16"/>
+                        <DockPanel>
+                            <Button Content="Cancel" Command="{Binding CancelEmailImportCommand}"
+                                    Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                            <Button Content="✓ Extract &amp; Fill" Command="{Binding ExtractFromEmailCommand}"
+                                    Style="{StaticResource PrimaryButton}" DockPanel.Dock="Right"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
             <!-- New Company Dialog Overlay -->
             <Grid Grid.Column="0" Background="#80000000" Visibility="{Binding IsCreatingNewCompany, Converter={StaticResource BoolToVisibilityConverter}}">

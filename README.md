@@ -8,7 +8,7 @@
 
 A production-quality .NET 8 WPF desktop application for tracking job applications with Obsidian vault sync.
 
-> **Beta v0.1.0** — fully functional with Companies, Contacts, Skills management, Kanban board view, PDF extraction, Obsidian sync, and a full test suite.
+> **Beta v0.1.0** — fully functional with Companies, Contacts, Skills management, Kanban board view, PDF extraction, email import, Obsidian sync, and a full test suite.
 
 ---
 
@@ -38,6 +38,7 @@ Comprehensive job application form with PDF extraction, skill tracking, and comp
 - **Application tracking** — full job application lifecycle from Applied → Interview → Offer/Rejected
 - **Obsidian vault sync** — auto-sync to markdown files in your vault with protected user notes section
 - **PDF extraction** — extract text and company name from job posting PDFs
+- **Email import** — paste a confirmation email to auto-fill role, company, date, and URL
 - **Stat cards** — application count, response rate, and offer rate at a glance
 - **Dark theme** — full dark mode support with custom resource dictionary
 - **Delete confirmations** — prevent accidental data loss
@@ -64,8 +65,9 @@ JobTracker.Infrastructure → SQLite + Dapper, Markdown Sync, PDF Extraction
 **Data flow:**
 ```
 UI (XAML binding) ←→ ViewModel ←→ Application Service ←→ Repository (Dapper/SQLite)
-                                                      ↘ MarkdownSyncService → .md files
+                                                      ↘ MarkdownSyncService  → .md files
                                                       ↘ PdfExtractionService → Job PDFs
+                                                      ↘ EmailExtractionService → raw email text
 ```
 
 ---
@@ -91,7 +93,7 @@ JobTracker/
     │   ├── DTOs/
     │   │   └── Dtos.cs                 # Records: JobApplicationDto, CreateRequest
     │   ├── Interfaces/
-    │   │   └── IServices.cs            # IJobApplicationService, IMarkdownSyncService, IPdfExtractionService
+    │   │   └── IServices.cs            # IJobApplicationService, IMarkdownSyncService, IPdfExtractionService, IEmailExtractionService
     │   └── Services/
     │       ├── JobApplicationService.cs
     │       └── SettingsService.cs      # JSON-persisted settings in %APPDATA%\JobTracker
@@ -104,15 +106,17 @@ JobTracker/
     │   │   └── OtherRepositories.cs          # Company, Contact, Skill
     │   ├── Markdown/
     │   │   └── MarkdownSyncService.cs  # Section-aware merge (never overwrites user notes)
-    │   └── Pdf/
-    │       └── PdfExtractionService.cs # Extract text and metadata from job posting PDFs
+    │   ├── Pdf/
+    │   │   └── PdfExtractionService.cs  # Extract text and metadata from job posting PDFs
+    │   └── Email/
+    │       └── EmailExtractionService.cs # Parse pasted email text → role, company, date, URL
     │
     └── JobTracker.WPF/
         ├── App.xaml / App.xaml.cs      # DI container + DB init + skill seeding
         ├── ViewModels/
         │   ├── ViewModelBase.cs        # INPC, RelayCommand, AsyncRelayCommand
         │   ├── DashboardViewModel.cs   # Week stats, filter/sort, CRUD commands
-        │   ├── ApplicationFormViewModel.cs  # Add/Edit form + PDF extraction
+        │   ├── ApplicationFormViewModel.cs  # Add/Edit form + PDF extraction + email import
         │   └── SettingsViewModel.cs    # Vault path, general app settings
         ├── Views/
         │   ├── MainWindow.xaml(.cs)    # Shell: sidebar nav + Frame
@@ -231,6 +235,49 @@ Your notes here — write anything.
 
 ---
 
+## Email Import
+
+When you apply to a job, most platforms (LinkedIn, Indeed, Greenhouse, Workday, company ATS) send a confirmation email. Instead of typing everything manually, paste that email directly into the app and let it extract the key fields for you.
+
+### How to use
+
+**1. Open the New Application form**
+Click **+ New Application** on the dashboard.
+
+**2. Click "✉ Import from Email"**
+The button sits in the Job Description section, next to "📄 Load from PDF".
+
+**3. Paste the email**
+Copy the full email from your mail client (subject line + body) and paste it into the text area.
+
+**4. Click "Extract & Fill"**
+The app parses the text and pre-fills:
+
+| Field | Extracted from |
+|---|---|
+| Role Name | Subject line or body patterns ("application for `<Role>` at…") |
+| Company | Sender display name, "thank you for applying to `<Company>`", or `Company:` label |
+| Applied Date | `Date:` email header, ISO dates, or long-form dates in the body |
+| Job Posting URL | Any job/careers URL found in the body |
+| Job Description | The full pasted email text |
+
+**5. Review and save**
+An alert confirms what was extracted. Correct any fields the parser got wrong, then click **Save**.
+
+> If the company name is not already in your database, the app asks whether to create it on the spot — no need to switch pages.
+
+### What it handles
+
+The extractor covers the most common confirmation email formats:
+- **LinkedIn** — "Your application was sent to `<Company>`"
+- **Greenhouse / Lever** — "We've received your application for `<Role>`"
+- **Workday** — "Thank you for applying to `<Company>` for the position of `<Role>`"
+- **Generic ATS** — `Position:` / `Job Title:` label lines, `From:` display name
+
+Unrecognised formats still work partially — at minimum the body text is loaded as the job description and the date defaults to today.
+
+---
+
 ## Database Schema
 
 ```sql
@@ -296,10 +343,11 @@ The `USER_NOTES_START/END` markers protect your manual notes from being overwrit
 
 ## Extending the Application
 
-### Add email parsing
-- Add `IEmailService` in Application.Interfaces
-- Implement with `MailKit` in Infrastructure
-- Wire a background service to poll inbox and auto-create draft applications
+### Add automated email polling
+The current email import is paste-based. To fully automate it:
+- Add OAuth token storage (DPAPI-encrypted) in `SettingsService`
+- Implement a Gmail/Outlook REST client in Infrastructure
+- Add a background poller that scans the inbox for confirmation patterns and creates draft applications
 
 ### Add interview scheduling
 - Add a calendar/timeline view in WPF
@@ -323,7 +371,7 @@ The `USER_NOTES_START/END` markers protect your manual notes from being overwrit
 
 - [ ] CSV / Excel export for applications
 - [ ] Calendar / timeline view for interview scheduling
-- [ ] Email parsing integration to auto-create applications
+- [ ] Automated email polling (OAuth-based inbox scan to replace manual paste)
 - [ ] Cloud sync (Dropbox / Azure Blob) for multi-device support
 - [ ] AI-powered CV improvement suggestions (requires API integration)
 - [ ] Toast/snackbar notifications (currently uses status bar)

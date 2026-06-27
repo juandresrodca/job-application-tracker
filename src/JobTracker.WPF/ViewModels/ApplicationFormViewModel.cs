@@ -17,6 +17,7 @@ public class ApplicationFormViewModel : ViewModelBase
     private readonly ISkillRepository _skillRepo;
     private readonly ISettingsService _settings;
     private readonly IPdfExtractionService _pdfExtraction;
+    private readonly IEmailExtractionService _emailExtraction;
     private readonly IDialogService _dialogService;
 
     private int? _editingId;
@@ -99,6 +100,12 @@ public class ApplicationFormViewModel : ViewModelBase
     private bool _isCreatingNewContact = false;
     public bool IsCreatingNewContact { get => _isCreatingNewContact; set => SetField(ref _isCreatingNewContact, value); }
 
+    private bool _isImportingFromEmail = false;
+    public bool IsImportingFromEmail { get => _isImportingFromEmail; set => SetField(ref _isImportingFromEmail, value); }
+
+    private string _emailText = string.Empty;
+    public string EmailText { get => _emailText; set => SetField(ref _emailText, value); }
+
     // ── Collections ──────────────────────────────────────────────────────────
     public ObservableCollection<CompanyDto> Companies { get; } = new();
     public ObservableCollection<ContactDto> Contacts { get; } = new();
@@ -122,6 +129,9 @@ public class ApplicationFormViewModel : ViewModelBase
     public RelayCommand ShowCreateContactDialogCommand { get; }
     public AsyncRelayCommand CreateNewContactCommand { get; }
     public RelayCommand CancelCreateContactCommand { get; }
+    public RelayCommand ShowEmailImportCommand { get; }
+    public AsyncRelayCommand ExtractFromEmailCommand { get; }
+    public RelayCommand CancelEmailImportCommand { get; }
 
     // ── Events ───────────────────────────────────────────────────────────────
     public event Action? SaveCompleted;
@@ -134,6 +144,7 @@ public class ApplicationFormViewModel : ViewModelBase
         ISkillRepository skillRepo,
         ISettingsService settings,
         IPdfExtractionService pdfExtraction,
+        IEmailExtractionService emailExtraction,
         IDialogService dialogService)
     {
         _appService = appService;
@@ -142,6 +153,7 @@ public class ApplicationFormViewModel : ViewModelBase
         _skillRepo = skillRepo;
         _settings = settings;
         _pdfExtraction = pdfExtraction;
+        _emailExtraction = emailExtraction;
         _dialogService = dialogService;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !string.IsNullOrWhiteSpace(RoleName) && SelectedCompany is not null);
@@ -166,6 +178,13 @@ public class ApplicationFormViewModel : ViewModelBase
             NewContactName = string.Empty;
             NewContactEmail = string.Empty;
             NewContactRole = string.Empty;
+        });
+        ShowEmailImportCommand = new RelayCommand(() => IsImportingFromEmail = true);
+        ExtractFromEmailCommand = new AsyncRelayCommand(ExtractFromEmailAsync, () => !string.IsNullOrWhiteSpace(EmailText));
+        CancelEmailImportCommand = new RelayCommand(() =>
+        {
+            IsImportingFromEmail = false;
+            EmailText = string.Empty;
         });
     }
 
@@ -306,6 +325,61 @@ public class ApplicationFormViewModel : ViewModelBase
         {
             _dialogService.Alert("Error", $"Failed to extract text from PDF: {ex.Message}");
         }
+    }
+
+    private async Task ExtractFromEmailAsync()
+    {
+        var result = _emailExtraction.Extract(EmailText);
+
+        var anyExtracted = result.RoleName is not null || result.CompanyName is not null;
+        if (!anyExtracted)
+        {
+            _dialogService.Alert("Nothing Found",
+                "Could not extract any fields from the pasted text. Make sure you paste the full email including the subject line.");
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.RoleName))
+            RoleName = result.RoleName;
+
+        if (result.AppliedDate.HasValue)
+            AppliedDate = result.AppliedDate.Value;
+
+        if (!string.IsNullOrWhiteSpace(result.JobPostingUrl))
+            JobPostingUrl = result.JobPostingUrl;
+
+        if (!string.IsNullOrWhiteSpace(result.Body))
+            JobDescription = result.Body;
+
+        if (!string.IsNullOrWhiteSpace(result.CompanyName))
+        {
+            var existing = Companies.FirstOrDefault(c =>
+                c.Name.Equals(result.CompanyName, StringComparison.OrdinalIgnoreCase));
+
+            if (existing is not null)
+            {
+                SelectedCompany = existing;
+            }
+            else
+            {
+                var create = _dialogService.Confirm("Company Not Found",
+                    $"Company '{result.CompanyName}' was not found. Would you like to create it?");
+                if (create)
+                {
+                    var newCompany = new Company { Name = result.CompanyName.Trim() };
+                    var created = await _companyRepo.AddAsync(newCompany);
+                    var dto = new CompanyDto(created.Id, created.Name, created.Website, created.Industry, created.Location);
+                    Companies.Add(dto);
+                    SelectedCompany = dto;
+                }
+            }
+        }
+
+        IsImportingFromEmail = false;
+        EmailText = string.Empty;
+
+        _dialogService.Alert("Extracted",
+            "Fields pre-filled from the email. Please review and correct any values before saving.");
     }
 
     private async Task CreateNewCompanyAsync()

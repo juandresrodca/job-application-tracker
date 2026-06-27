@@ -45,3 +45,17 @@ public interface IPdfExtractionService
     /// <summary>Attempts to extract the job role/title from PDF text.</summary>
     Task<string?> ExtractRoleNameAsync(string filePath);
 }
+
+public record EmailExtractionResult(
+    string? RoleName,
+    string? CompanyName,
+    DateTime? AppliedDate,
+    string? JobPostingUrl,
+    string? Body
+);
+
+public interface IEmailExtractionService
+{
+    /// <summary>Parses raw email text (paste from any client) and extracts job application fields.</summary>
+    EmailExtractionResult Extract(string rawEmailText);
+}
