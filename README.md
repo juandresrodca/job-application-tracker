@@ -6,6 +6,7 @@
 ![Version](https://img.shields.io/badge/version-0.1.0--beta-orange)
 ![Build](https://github.com/juandresrodca/job-application-tracker/actions/workflows/ci.yml/badge.svg)
 [![Website](https://img.shields.io/badge/website-live-14A38E)](https://juandresrodca.github.io/job-application-tracker/)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-e35d6a?logo=githubsponsors)](https://github.com/sponsors/juandresrodca)
 
 A production-quality .NET 8 WPF desktop application for tracking job applications with Obsidian vault sync.
 
