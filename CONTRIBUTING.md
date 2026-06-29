@@ -5,7 +5,7 @@ Thank you for your interest in contributing!
 ## Development setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/juandresrodca/job-application-tracker.git
 cd JobTracker
 dotnet restore JobTracker.sln
 dotnet build JobTracker.sln

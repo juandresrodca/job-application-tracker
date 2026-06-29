@@ -1,16 +1,42 @@
+<div align="center">
+
+<img src="docs/screenshots/dashboard-kanban.png" alt="JobTracker — Kanban board" width="880" />
+
 # Job Application Tracker
 
-![.NET 8](https://img.shields.io/badge/.NET-8.0-purple?logo=dotnet)
-![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue?logo=windows)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-0.1.0--beta-orange)
-![Build](https://github.com/juandresrodca/job-application-tracker/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/juandresrodca/job-application-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/juandresrodca/job-application-tracker/actions/workflows/ci.yml)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-purple?logo=dotnet)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue?logo=windows)](#installing-the-beta)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0--beta-orange)](https://github.com/juandresrodca/job-application-tracker/releases/latest)
 [![Website](https://img.shields.io/badge/website-live-14A38E)](https://juandresrodca.github.io/job-application-tracker/)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-e35d6a?logo=githubsponsors)](https://github.com/sponsors/juandresrodca)
 
 A production-quality .NET 8 WPF desktop application for tracking job applications with Obsidian vault sync.
 
 > **Beta v0.1.0** — fully functional with Companies, Contacts, Skills management, Kanban board view, PDF extraction, email import, Obsidian sync, and a full test suite.
+
+[**⬇ Download latest**](https://github.com/juandresrodca/job-application-tracker/releases/latest) · [**🌐 Website**](https://juandresrodca.github.io/job-application-tracker/) · [**🐛 Report a bug**](https://github.com/juandresrodca/job-application-tracker/issues/new?template=bug_report.md) · [**💡 Feature request**](https://github.com/juandresrodca/job-application-tracker/issues/new?template=feature_request.md)
+
+</div>
+
+---
+
+## Contents
+
+- [Features](#features-v010)
+- [Screenshots](#screenshots)
+- [Architecture](#architecture-decision-why-mvvm--wpf)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Obsidian Vault Sync](#obsidian-vault-sync)
+- [Email Import](#email-import)
+- [Database Schema](#database-schema)
+- [Extending](#extending-the-application)
+- [Roadmap](#known-limitations--todos)
+- [Install the Beta](#installing-the-beta)
+- [License](#license)
 
 ---
 
@@ -150,7 +176,7 @@ JobTracker/
 ### 1. Clone and open
 
 ```bash
-git clone <your-repo>
+git clone https://github.com/juandresrodca/job-application-tracker.git
 cd JobTracker
 ```
 
