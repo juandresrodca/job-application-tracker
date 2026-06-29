@@ -1,6 +1,3 @@
-<div align="center">
-
-<img src="docs/screenshots/dashboard-kanban.png" alt="JobTracker — Kanban board" width="880" />
 
 # Job Application Tracker
 
@@ -18,25 +15,48 @@ A production-quality .NET 8 WPF desktop application for tracking job application
 
 [**⬇ Download latest**](https://github.com/juandresrodca/job-application-tracker/releases/latest) · [**🌐 Website**](https://juandresrodca.github.io/job-application-tracker/) · [**🐛 Report a bug**](https://github.com/juandresrodca/job-application-tracker/issues/new?template=bug_report.md) · [**💡 Feature request**](https://github.com/juandresrodca/job-application-tracker/issues/new?template=feature_request.md)
 
+<div align="center">
+
+<img src="docs/screenshots/dashboard-kanban.png" alt="JobTracker — Kanban board" width="880" />
+
 </div>
 
 ---
 
 ## Contents
 
-- [Features](#features-v010)
-- [Screenshots](#screenshots)
-- [Architecture](#architecture-decision-why-mvvm--wpf)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Obsidian Vault Sync](#obsidian-vault-sync)
-- [Email Import](#email-import)
-- [Database Schema](#database-schema)
-- [Extending](#extending-the-application)
-- [Roadmap](#known-limitations--todos)
-- [Install the Beta](#installing-the-beta)
-- [License](#license)
+- [Job Application Tracker](#job-application-tracker)
+  - [Contents](#contents)
+  - [Screenshots](#screenshots)
+    - [Dashboard — Table View](#dashboard--table-view)
+    - [Dashboard — Kanban Board](#dashboard--kanban-board)
+    - [Application Form](#application-form)
+  - [Features (v0.1.0)](#features-v010)
+  - [Architecture Decision: Why MVVM + WPF?](#architecture-decision-why-mvvm--wpf)
+  - [Project Structure](#project-structure)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
+    - [1. Clone and open](#1-clone-and-open)
+    - [2. First run](#2-first-run)
+    - [3. Configure Obsidian vault sync (optional)](#3-configure-obsidian-vault-sync-optional)
+  - [Obsidian Vault Sync](#obsidian-vault-sync)
+    - [Setup](#setup)
+    - [Where files are created](#where-files-are-created)
+    - [Preserving your notes](#preserving-your-notes)
+    - [Tips](#tips)
+  - [Email Import](#email-import)
+    - [How to use](#how-to-use)
+    - [What it handles](#what-it-handles)
+  - [Database Schema](#database-schema)
+  - [Obsidian Markdown Format](#obsidian-markdown-format)
+  - [Extending the Application](#extending-the-application)
+    - [Add automated email polling](#add-automated-email-polling)
+    - [Add interview scheduling](#add-interview-scheduling)
+    - [Add cloud sync](#add-cloud-sync)
+    - [Add CV improvements AI analysis](#add-cv-improvements-ai-analysis)
+  - [Known Limitations / TODOs](#known-limitations--todos)
+  - [Installing the Beta](#installing-the-beta)
+  - [License](#license)
 
 ---
 
