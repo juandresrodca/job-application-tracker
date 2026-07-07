@@ -81,7 +81,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .reveal { opacity: 1; transform: none; transition: none; }
-      .hero-shot, .hint, [data-diffuse] span { animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important; }
+      .hero-shot, .hint, [data-diffuse] span, .frame-bar .live-tag::before { animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important; }
     }
 
     /* ---------- Nav ---------- */
@@ -153,7 +153,20 @@
     .frame-bar { display: flex; align-items: center; gap: 8px; padding: 11px 16px; background: var(--bg-2); border-bottom: 1px solid var(--border-3); }
     .dot { width: 11px; height: 11px; border-radius: 9999px; }
     .frame-bar .label { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); margin-left: 10px; }
+    .frame-bar .live-tag { margin-left: auto; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--accent-2); display: inline-flex; align-items: center; gap: 5px; }
+    .frame-bar .live-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 0 0 rgba(45,189,166,0.5); animation: jt-live 1.8s ease-in-out infinite; }
+    @keyframes jt-live { 0% { box-shadow: 0 0 0 0 rgba(45,189,166,0.5); } 70%, 100% { box-shadow: 0 0 0 7px rgba(45,189,166,0); } }
     .frame img { width: 100%; display: block; }
+
+    /* CSS cross-fade slideshow (animates even where GIFs are frozen by the previewer) */
+    .demo-slides { position: relative; width: 100%; aspect-ratio: 720 / 451; background: #0A0D13; }
+    .demo-slides img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .demo-slides .s1 { z-index: 1; }  /* base frame, always visible underneath */
+    .demo-slides .s2 { z-index: 2; opacity: 0; animation: jt-slide2 4.5s ease-in-out infinite; }
+    .demo-slides .s3 { z-index: 3; opacity: 0; animation: jt-slide3 4.5s ease-in-out infinite; }
+    @keyframes jt-slide2 { 0%, 28% { opacity: 0; } 33%, 63% { opacity: 1; } 68%, 100% { opacity: 0; } }
+    @keyframes jt-slide3 { 0%, 61% { opacity: 0; } 66%, 96% { opacity: 1; } 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .demo-slides .s2, .demo-slides .s3 { animation: none !important; opacity: 0 !important; } }
 
     /* ---------- Section heading ---------- */
     .head { text-align: center; }
@@ -264,6 +277,21 @@
   <!-- DASHBOARD SHOWCASE -->
   <section id="dashboard" class="section" style="padding-top:42px; padding-bottom:36px;">
     <div class="maxw">
+      <div class="frame reveal">
+        <div class="frame-bar">
+          <span class="dot" style="background:#F85149"></span>
+          <span class="dot" style="background:#E0A100"></span>
+          <span class="dot" style="background:#3FB950"></span>
+          <span class="label">JobTracker — Live demo</span>
+          <span class="live-tag">● live</span>
+        </div>
+        <div class="demo-slides" role="img" aria-label="Animated demo of JobTracker cycling through the dashboard, application form, and skills views">
+          <img src="screenshots/demo-1.png" alt="" class="s1" />
+          <img src="screenshots/demo-2.png" alt="" class="s2" />
+          <img src="screenshots/demo-3.png" alt="" class="s3" />
+        </div>
+      </div>
+
       <div class="frame reveal">
         <div class="frame-bar">
           <span class="dot" style="background:#F85149"></span>
