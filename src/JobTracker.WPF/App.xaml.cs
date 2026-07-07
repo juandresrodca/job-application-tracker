@@ -4,6 +4,7 @@ using JobTracker.Application.Interfaces;
 using JobTracker.Application.Services;
 using JobTracker.Domain.Interfaces;
 using JobTracker.Infrastructure.Data;
+using JobTracker.Infrastructure.Discovery;
 using JobTracker.Infrastructure.Email;
 using JobTracker.Infrastructure.Markdown;
 using JobTracker.Infrastructure.Pdf;
@@ -110,6 +111,8 @@ public partial class App : System.Windows.Application
         services.AddTransient<IMarkdownSyncService,   MarkdownSyncService>();
         services.AddTransient<IPdfExtractionService,  PdfExtractionService>();
         services.AddTransient<IEmailExtractionService, EmailExtractionService>();
+        services.AddSingleton<IMatchScoreService,  MatchScoreService>();
+        services.AddSingleton<IJobDiscoveryService, GreenhouseDiscoveryService>();
         services.AddTransient<IJobApplicationService, JobApplicationService>();
 
         // ── WPF Services ──────────────────────────────────────────────────
@@ -123,6 +126,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<CompaniesViewModel>();
         services.AddTransient<ContactsViewModel>();
         services.AddTransient<SkillsViewModel>();
+        services.AddTransient<DiscoverViewModel>();
 
         // ── WPF Pages ─────────────────────────────────────────────────────
         services.AddTransient<DashboardPage>();
@@ -131,6 +135,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<CompaniesPage>();
         services.AddTransient<ContactsPage>();
         services.AddTransient<SkillsPage>();
+        services.AddTransient<DiscoverPage>();
     }
 
     private async Task SeedDefaultDataAsync()

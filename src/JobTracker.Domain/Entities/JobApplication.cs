@@ -29,6 +29,21 @@ public class JobApplication
     // against local Today — UtcNow could be off by one around midnight.
     public int DaysSinceApplication => (DateTime.Today - AppliedDate.Date).Days;
 
+    /// <summary>Days since anything happened on this application (status change, edit) — falls back to the applied date.</summary>
+    public int DaysSinceLastActivity => (DateTime.Today - (LastUpdated?.Date ?? AppliedDate.Date)).Days;
+
+    /// <summary>Still in play: not yet an offer/acceptance and not closed out.</summary>
+    public bool IsActive => Status is ApplicationStatus.Applied
+        or ApplicationStatus.Screening
+        or ApplicationStatus.Interview
+        or ApplicationStatus.TechnicalTest;
+
+    /// <summary>Number of quiet days after which an active application deserves a nudge.</summary>
+    public const int FollowUpThresholdDays = 14;
+
+    /// <summary>Active application with no movement for two weeks — time to follow up.</summary>
+    public bool NeedsFollowUp => IsActive && DaysSinceLastActivity >= FollowUpThresholdDays;
+
     public string MarkdownFileName =>
         $"{AppliedDate:yyyy-MM-dd}_{SanitizeFileName(Company?.Name ?? "Unknown")}_{SanitizeFileName(RoleName)}_{Id}.md";
 

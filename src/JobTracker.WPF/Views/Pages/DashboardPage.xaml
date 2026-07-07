@@ -52,10 +52,17 @@
                         <TextBlock Text="Response" Style="{StaticResource StatLabel}"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource StatCard}">
+                <Border Style="{StaticResource StatCard}" Margin="0,0,8,0">
                     <StackPanel>
                         <TextBlock Text="{Binding OfferRate}" Style="{StaticResource StatNumber}"/>
                         <TextBlock Text="Offer Rate" Style="{StaticResource StatLabel}"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource StatCard}"
+                        ToolTip="Active applications with no movement for 14+ days">
+                    <StackPanel>
+                        <TextBlock Text="{Binding FollowUpCount}" Style="{StaticResource StatNumber}"/>
+                        <TextBlock Text="Follow up" Style="{StaticResource StatLabel}"/>
                     </StackPanel>
                 </Border>
             </WrapPanel>
@@ -165,7 +172,15 @@
                 <DataGridTemplateColumn Header="Days" Width="60">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DaysSinceApplication}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DaysSinceApplication}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DaysSinceApplication}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DaysSinceApplication}"/>
+                                <TextBlock Text=" ⏰" FontSize="11"
+                                           Visibility="{Binding NeedsFollowUp, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock.ToolTip>
+                                        <TextBlock Text="{Binding DaysSinceLastActivity, StringFormat='No activity for {0} days — time to follow up'}"/>
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
+                            </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -255,8 +270,13 @@
                                                                    TextTrimming="CharacterEllipsis"/>
                                                         <TextBlock Text="{Binding CompanyName}"
                                                                    Style="{StaticResource SubtleText}" Margin="0,2,0,0"/>
-                                                        <TextBlock Text="{Binding DaysSinceApplication, StringFormat='{}{0}d ago'}"
-                                                                   Style="{StaticResource LabelText}" Margin="0,4,0,0"/>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                            <TextBlock Text="{Binding DaysSinceApplication, StringFormat='{}{0}d ago'}"
+                                                                       Style="{StaticResource LabelText}"/>
+                                                            <TextBlock Text=" · ⏰ follow up" FontSize="10" Foreground="#E0A100"
+                                                                       Visibility="{Binding NeedsFollowUp, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                                       ToolTip="{Binding DaysSinceLastActivity, StringFormat='No activity for {0} days'}"/>
+                                                        </StackPanel>
                                                     </StackPanel>
                                                 </Border>
                                             </DataTemplate>

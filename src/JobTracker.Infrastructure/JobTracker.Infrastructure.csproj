@@ -15,4 +15,8 @@
     <ProjectReference Include="..\JobTracker.Domain\JobTracker.Domain.csproj"/>
     <ProjectReference Include="..\JobTracker.Application\JobTracker.Application.csproj"/>
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="JobTracker.Tests"/>
+  </ItemGroup>
 </Project>

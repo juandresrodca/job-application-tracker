@@ -14,7 +14,9 @@ public record JobApplicationDto(
     IReadOnlyList<string> Skills,
     string? Notes,
     bool IsRemote,
-    string? SalaryRange
+    string? SalaryRange,
+    int DaysSinceLastActivity = 0,
+    bool NeedsFollowUp = false
 );
 
 public record CreateJobApplicationRequest(
