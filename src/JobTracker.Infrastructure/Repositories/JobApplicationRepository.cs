@@ -48,35 +48,22 @@ public class JobApplicationRepository : IJobApplicationRepository
             },
             splitOn: "CId,CtId");
 
-        // Load all application skills in one query and map to applications
+        // Load all application skills in one query and group them per application
         var skillsSql = """
             SELECT aps.JobApplicationId, aps.SkillId, aps.IsOwned, aps.IsRequired, s.Id, s.Name, s.Category
             FROM ApplicationSkills aps
             JOIN Skills s ON s.Id = aps.SkillId
             """;
 
-        await conn.QueryAsync<ApplicationSkill, Skill, ApplicationSkill>(
+        var allSkills = await conn.QueryAsync<ApplicationSkill, Skill, ApplicationSkill>(
             skillsSql,
             (aps, s) => { aps.Skill = s; return aps; },
             splitOn: "Id");
 
-        // Now populate skills for each application
-        foreach (var appId in applicationsDict.Keys)
+        foreach (var group in allSkills.GroupBy(aps => aps.JobApplicationId))
         {
-            var skillsSql2 = """
-                SELECT aps.JobApplicationId, aps.SkillId, aps.IsOwned, aps.IsRequired, s.Id, s.Name, s.Category
-                FROM ApplicationSkills aps
-                JOIN Skills s ON s.Id = aps.SkillId
-                WHERE aps.JobApplicationId = @appId
-                """;
-
-            var skills = await conn.QueryAsync<ApplicationSkill, Skill, ApplicationSkill>(
-                skillsSql2,
-                (aps, s) => { aps.Skill = s; return aps; },
-                new { appId },
-                splitOn: "Id");
-
-            applicationsDict[appId].ApplicationSkills = skills.ToList();
+            if (applicationsDict.TryGetValue(group.Key, out var app))
+                app.ApplicationSkills = group.ToList();
         }
 
         return applicationsDict.Values;

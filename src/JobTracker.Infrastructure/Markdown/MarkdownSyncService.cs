@@ -29,6 +29,27 @@ public class MarkdownSyncService : IMarkdownSyncService
         set => _settings.ObsidianVaultPath = value;
     }
 
+    /// <summary>
+    /// All app-owned markdown lives in a dedicated subfolder of the vault.
+    /// The app must never create or delete files in the vault root — users keep
+    /// their own notes there.
+    /// </summary>
+    private string SyncFolder => Path.Combine(VaultPath!, "JobTracker");
+
+    /// <summary>A file is app-owned only if it contains our USER_NOTES marker.</summary>
+    private static bool IsAppOwnedFile(string filePath)
+    {
+        try
+        {
+            return File.Exists(filePath) &&
+                   File.ReadAllText(filePath).Contains(NotesMarker, StringComparison.Ordinal);
+        }
+        catch
+        {
+            return false; // unreadable → treat as not ours, never delete
+        }
+    }
+
     public async Task<SyncResult> SyncApplicationAsync(int applicationId)
     {
         if (string.IsNullOrWhiteSpace(VaultPath))
@@ -69,11 +90,21 @@ public class MarkdownSyncService : IMarkdownSyncService
 
         try
         {
-            var filePath = Path.Combine(VaultPath!, markdownFileName);
-            if (!File.Exists(filePath))
-                return new SyncResult(true, null); // File already doesn't exist, consider it success
+            // Check the app subfolder first, then the legacy vault-root location.
+            // Only delete files we own (marked with USER_NOTES) — never user notes.
+            var candidates = new[]
+            {
+                Path.Combine(SyncFolder, markdownFileName),
+                Path.Combine(VaultPath!, markdownFileName),
+            };
 
-            File.Delete(filePath);
+            foreach (var filePath in candidates)
+            {
+                if (!File.Exists(filePath)) continue;
+                if (!IsAppOwnedFile(filePath)) continue;
+                File.Delete(filePath);
+            }
+
             return new SyncResult(true, null);
         }
         catch (Exception ex)
@@ -101,15 +132,18 @@ public class MarkdownSyncService : IMarkdownSyncService
                 appMarkdownFileNames.Add(app.MarkdownFileName);
             }
 
-            // Step 2: Find and delete orphaned markdown files (files that don't correspond to any application)
-            var markdownFiles = Directory.GetFiles(VaultPath, "*.md");
+            // Step 2: Delete orphaned markdown files — ONLY inside the app's own
+            // subfolder, and ONLY files that carry our USER_NOTES marker. Files in the
+            // vault root (the user's personal notes) are never touched.
             var orphanedFiles = new List<string>();
-
-            foreach (var filePath in markdownFiles)
+            if (Directory.Exists(SyncFolder))
             {
-                var fileName = Path.GetFileName(filePath);
-                if (!appMarkdownFileNames.Contains(fileName))
+                foreach (var filePath in Directory.GetFiles(SyncFolder, "*.md"))
                 {
+                    var fileName = Path.GetFileName(filePath);
+                    if (appMarkdownFileNames.Contains(fileName)) continue;
+                    if (!IsAppOwnedFile(filePath)) continue; // not written by us → leave it alone
+
                     orphanedFiles.Add(fileName);
                     try
                     {
@@ -134,12 +168,42 @@ public class MarkdownSyncService : IMarkdownSyncService
 
     private async Task WriteMarkdownAsync(JobApplication app)
     {
-        var filePath = Path.Combine(VaultPath!, app.MarkdownFileName);
+        Directory.CreateDirectory(SyncFolder);
+        var filePath = Path.Combine(SyncFolder, app.MarkdownFileName);
+
+        // Preserve user notes from the current file, or migrate them from a
+        // pre-beta location/name (vault root and/or filename without the Id suffix).
         var existingUserNotes = ExtractUserNotes(filePath);
+        if (!File.Exists(filePath))
+        {
+            foreach (var legacyPath in LegacyPathsFor(app))
+            {
+                if (!IsAppOwnedFile(legacyPath)) continue;
+                existingUserNotes = ExtractUserNotes(legacyPath);
+                try { File.Delete(legacyPath); } catch { /* migration is best-effort */ }
+                break;
+            }
+        }
 
         var content = BuildMarkdown(app, existingUserNotes);
         await File.WriteAllTextAsync(filePath, content);
     }
+
+    /// <summary>Locations older app versions may have written this application to.</summary>
+    private IEnumerable<string> LegacyPathsFor(JobApplication app)
+    {
+        yield return Path.Combine(SyncFolder, app.LegacyMarkdownFileName);
+        yield return Path.Combine(VaultPath!, app.MarkdownFileName);
+        yield return Path.Combine(VaultPath!, app.LegacyMarkdownFileName);
+    }
+
+    /// <summary>Escapes a value for a double-quoted YAML scalar (quotes, backslashes, newlines).</summary>
+    private static string Yaml(string? value) =>
+        (value ?? string.Empty)
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", " ")
+            .Replace("\n", " ");
 
     private static string BuildMarkdown(JobApplication app, string preservedNotes)
     {
@@ -151,11 +215,11 @@ public class MarkdownSyncService : IMarkdownSyncService
         ---
         tags: [job-application, {app.Status.ToString().ToLower()}, {app.AppliedDate.Year}]
         status: {app.Status}
-        company: "{app.Company?.Name ?? "Unknown"}"
-        role: "{app.RoleName}"
+        company: "{Yaml(app.Company?.Name ?? "Unknown")}"
+        role: "{Yaml(app.RoleName)}"
         applied_date: {app.AppliedDate:yyyy-MM-dd}
         last_updated: {app.LastUpdated?.ToString("yyyy-MM-dd") ?? app.AppliedDate.ToString("yyyy-MM-dd")}
-        contact: "{app.Contact?.Name ?? ""}"
+        contact: "{Yaml(app.Contact?.Name)}"
         remote: {(app.IsRemote ? "true" : "false")}
         ---
 
