@@ -62,6 +62,7 @@ public partial class MainWindow : Window
             "Companies"      => CreatePage<CompaniesPage>(),
             "Contacts"       => CreatePage<ContactsPage>(),
             "Skills"         => CreatePage<SkillsPage>(),
+            "Discover"       => CreatePage<DiscoverPage>(),
             "Settings"       => CreatePage<SettingsPage>(),
             _                => CreatePage<DashboardPage>()
         };
@@ -119,6 +120,15 @@ public partial class MainWindow : Window
     {
         var page = _services.GetRequiredService<ApplicationFormPage>();
         _ = ((ApplicationFormViewModel)page.DataContext!).InitializeForEditAsync(applicationId);
+        MainFrame.Navigate(page);
+    }
+
+    /// <summary>Opens the New Application form pre-filled from a discovered job listing.</summary>
+    public void NavigateToNewFromDiscovery(DiscoveredJobVm job)
+    {
+        var page = _services.GetRequiredService<ApplicationFormPage>();
+        var vm = (ApplicationFormViewModel)page.DataContext!;
+        _ = vm.InitializeFromDiscoveryAsync(job.Title, job.Dto.DescriptionText, job.Url);
         MainFrame.Navigate(page);
     }
 }

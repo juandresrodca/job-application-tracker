@@ -132,6 +132,20 @@
                         <TextBox Text="{Binding JobDescription, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource MultiLineTextBox}"
                                  Height="150"/>
+
+                        <!-- Offline skills match score -->
+                        <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="6"
+                                Background="{StaticResource CardBrush}"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                Visibility="{Binding HasMatchScore, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding MatchScoreText}"
+                                           FontWeight="SemiBold" Foreground="#2DBDA6" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding MissingSkillsText}"
+                                           Style="{StaticResource SubtleText}"
+                                           Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
 

@@ -165,7 +165,9 @@ public class JobApplicationService : IJobApplicationService
         a.ApplicationSkills.Select(s => s.Skill?.Name ?? "").Where(n => n != "").ToList(),
         a.Notes,
         a.IsRemote,
-        a.SalaryRange
+        a.SalaryRange,
+        a.DaysSinceLastActivity,
+        a.NeedsFollowUp
     );
 
     private static int GetIso8601WeekOfYear(DateTime date)

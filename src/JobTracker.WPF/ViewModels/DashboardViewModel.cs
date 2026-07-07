@@ -92,6 +92,14 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
         private set => SetField(ref _interviewCount, value);
     }
 
+    private int _followUpCount;
+    /// <summary>Active applications with no movement for 14+ days.</summary>
+    public int FollowUpCount
+    {
+        get => _followUpCount;
+        private set => SetField(ref _followUpCount, value);
+    }
+
     private string _responseRate = "—";
     public string ResponseRate
     {
@@ -206,7 +214,6 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
             var source = IsWeekView
                 ? (await _appService.GetCurrentWeekApplicationsAsync()).ToList()
                 : (await _appService.GetAllApplicationsAsync()).ToList();
-            var all = IsWeekView ? source : null;
 
             Applications.Clear();
             foreach (var app in source)
@@ -218,6 +225,7 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
                 or ApplicationStatus.Screening or ApplicationStatus.Interview
                 or ApplicationStatus.TechnicalTest);
             InterviewCount = source.Count(a => a.Status == ApplicationStatus.Interview);
+            FollowUpCount = source.Count(a => a.NeedsFollowUp);
 
             // Response rate: at least moved past Applied
             var responded = source.Count(a => a.Status is not ApplicationStatus.Applied);
@@ -257,11 +265,11 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            var term = SearchText.ToLower();
+            var term = SearchText;
             query = query.Where(a =>
-                a.RoleName.ToLower().Contains(term) ||
-                a.CompanyName.ToLower().Contains(term) ||
-                (a.ContactName?.ToLower().Contains(term) ?? false));
+                a.RoleName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                a.CompanyName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                (a.ContactName?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
         query = SortBy switch

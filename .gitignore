@@ -35,3 +35,6 @@ Thumbs.db
 ## Local build output / error logs (never commit these)
 final_errors*.txt
 *_errors_utf8.txt
+
+## Firecrawl scrape cache
+.firecrawl/

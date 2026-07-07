@@ -8,11 +8,15 @@
   <ItemGroup>
     <PackageReference Include="Dapper"              Version="2.1.28"/>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.8"/>
-    <PackageReference Include="itext7"               Version="7.2.5"/>
+    <PackageReference Include="PdfPig"               Version="0.1.9"/>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\JobTracker.Domain\JobTracker.Domain.csproj"/>
     <ProjectReference Include="..\JobTracker.Application\JobTracker.Application.csproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="JobTracker.Tests"/>
   </ItemGroup>
 </Project>

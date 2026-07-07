@@ -1,0 +1,97 @@
+<Page x:Class="JobTracker.WPF.Views.Pages.DiscoverPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Discover"
+      Background="{StaticResource BackgroundBrush}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Header -->
+            <RowDefinition Height="Auto"/>  <!-- Fetch toolbar -->
+            <RowDefinition Height="*"/>     <!-- Results -->
+            <RowDefinition Height="Auto"/>  <!-- Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- ── Header ────────────────────────────────────────────────────── -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Discover Jobs" Style="{StaticResource PageTitleText}"/>
+            <TextBlock Style="{StaticResource SubtleText}" Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="Fetch open roles from a company's public Greenhouse board and rank them against your skill catalog. Opt-in: nothing is fetched until you press the button."/>
+        </StackPanel>
+
+        <!-- ── Fetch toolbar ─────────────────────────────────────────────── -->
+        <Border Grid.Row="1" Style="{StaticResource ToolbarCard}" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+                         Text="{Binding BoardSlug, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource SearchBox}"
+                         ToolTip="Greenhouse board name — usually the company name in lowercase (e.g. monzo, stripe, gitlab)"
+                         Margin="0,0,8,0"/>
+
+                <Button Grid.Column="1" Content="🔎 Fetch jobs"
+                        Command="{Binding FetchCommand}"
+                        Style="{StaticResource PrimaryButton}"/>
+            </Grid>
+        </Border>
+
+        <!-- ── Results ───────────────────────────────────────────────────── -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Results}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="14,10" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Title}" Style="{StaticResource TitleText}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                        <TextBlock Text="{Binding Location}" Style="{StaticResource SubtleText}"/>
+                                        <TextBlock Text="{Binding UpdatedText, StringFormat=' · updated {0}'}"
+                                                   Style="{StaticResource SubtleText}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding RelevanceText}"
+                                               Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12"
+                                               Foreground="#2DBDA6"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="🌐 Open"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Margin="0,0,8,0"
+                                            Click="OpenJob_Click"
+                                            Tag="{Binding}"/>
+                                    <Button Content="➕ Track"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Click="TrackJob_Click"
+                                            Tag="{Binding}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- ── Status bar ────────────────────────────────────────────────── -->
+        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" Padding="8,4" Margin="0,8,0,0">
+            <Grid>
+                <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubtleText}" TextWrapping="Wrap"/>
+                <ProgressBar IsIndeterminate="True" Height="3" VerticalAlignment="Bottom"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

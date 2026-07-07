@@ -75,13 +75,24 @@
       86%, 100% { opacity: 0; }
     }
 
-    /* ---- Scroll-reveal transitions ---- */
-    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out); }
-    .reveal.in { opacity: 1; transform: none; }
+    /* ---- Scroll-reveal (progressive: JS adds .reveal, so no-JS keeps all content visible) ---- */
+    @keyframes jt-reveal-rise { from { opacity: 0; transform: translateY(14px); } }
+    .reveal { opacity: 0; }
+    .reveal.in { opacity: 1; animation: jt-reveal-rise .55s var(--ease-out) var(--d, 0ms) backwards; }
 
+    /* ---- Film grain (physical texture over the flat dark bg) ---- */
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: 80; pointer-events: none; opacity: .028;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ---- Reduced motion: global kill-switch, nothing hidden ---- */
     @media (prefers-reduced-motion: reduce) {
-      .reveal { opacity: 1; transform: none; transition: none; }
-      .hero-shot, .hint, [data-diffuse] span { animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1 !important; }
+      [data-diffuse] span, .hero-shot, .hint { opacity: 1 !important; filter: none !important; transform: none !important; }
+      .demo-slides .s2, .demo-slides .s3 { opacity: 0 !important; } /* keep base frame, not a mid-fade */
     }
 
     /* ---------- Nav ---------- */
@@ -106,7 +117,9 @@
     .btn {
       display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px;
       border-radius: 9px; font-family: var(--font-body); font-weight: 600; font-size: 15px;
-      cursor: pointer; border: 1px solid transparent; transition: all 160ms var(--ease-out);
+      cursor: pointer; border: 1px solid transparent;
+      transition: transform .16s var(--ease-out), background-color 160ms ease,
+                  border-color 160ms ease, color 160ms ease;
     }
     .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
     .btn-primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
@@ -153,18 +166,49 @@
     .frame-bar { display: flex; align-items: center; gap: 8px; padding: 11px 16px; background: var(--bg-2); border-bottom: 1px solid var(--border-3); }
     .dot { width: 11px; height: 11px; border-radius: 9999px; }
     .frame-bar .label { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); margin-left: 10px; }
+    .frame-bar .live-tag { margin-left: auto; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--accent-2); display: inline-flex; align-items: center; gap: 5px; }
+    .frame-bar .live-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 0 0 rgba(45,189,166,0.5); animation: jt-live 1.8s ease-in-out infinite; }
+    @keyframes jt-live { 0% { box-shadow: 0 0 0 0 rgba(45,189,166,0.5); } 70%, 100% { box-shadow: 0 0 0 7px rgba(45,189,166,0); } }
     .frame img { width: 100%; display: block; }
+
+    /* CSS cross-fade slideshow (animates even where GIFs are frozen by the previewer) */
+    .demo-slides { position: relative; width: 100%; aspect-ratio: 720 / 451; background: #0A0D13; }
+    .demo-slides img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .demo-slides .s1 { z-index: 1; }  /* base frame, always visible underneath */
+    .demo-slides .s2 { z-index: 2; opacity: 0; animation: jt-slide2 4.5s ease-in-out infinite; }
+    .demo-slides .s3 { z-index: 3; opacity: 0; animation: jt-slide3 4.5s ease-in-out infinite; }
+    @keyframes jt-slide2 { 0%, 28% { opacity: 0; } 33%, 63% { opacity: 1; } 68%, 100% { opacity: 0; } }
+    @keyframes jt-slide3 { 0%, 61% { opacity: 0; } 66%, 96% { opacity: 1; } 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .demo-slides .s2, .demo-slides .s3 { animation: none !important; opacity: 0 !important; } }
 
     /* ---------- Section heading ---------- */
     .head { text-align: center; }
-    .overline { font-weight: 600; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-3); }
+    /* Numbered kickers — a document-style navigation device, not a repeated AI-tell */
+    .overline { font-weight: 600; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+    .overline b { color: var(--accent-2); font-weight: 500; font-family: var(--font-mono); }
     .head h2 { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 4vw, 32px); letter-spacing: -0.02em; color: #fff; margin: 10px 0 0; }
 
     /* ---------- Feature cards ---------- */
     .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     @media (max-width: 820px) { .features { grid-template-columns: 1fr; } }
-    .fcard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: all 160ms var(--ease-out); }
-    .fcard:hover { border-color: #2c5e57; transform: translateY(-3px); }
+    .fcard {
+      position: relative; overflow: hidden;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+      transition: border-color 160ms ease, transform .2s var(--ease-out);
+    }
+    .fcard:hover { border-color: #2c5e57; } /* color-only hover is safe on touch */
+
+    /* Movement + cursor spotlight only for real pointers */
+    @media (hover: hover) and (pointer: fine) {
+      .fcard:hover { transform: translateY(-3px); }
+      .fcard::after {
+        content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none;
+        transition: opacity .3s ease;
+        background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%),
+          rgba(45,189,166,.07), transparent 65%);
+      }
+      .fcard:hover::after { opacity: 1; }
+    }
     .fcard .ico { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
     .fcard .ico.teal { background: rgba(20,163,142,0.13); color: var(--accent-2); }
     .fcard .ico.violet { background: rgba(124,102,224,0.16); }
@@ -195,6 +239,22 @@
     /* ---------- Footer ---------- */
     .foot { display: flex; align-items: center; justify-content: space-between; padding: 22px 40px; border-top: 1px solid var(--border-2); font-size: 13px; color: var(--text-faint); flex-wrap: wrap; gap: 10px; }
     .foot .mono { font-family: var(--font-mono); font-size: 12px; }
+
+    /* ---- Scroll progress bar (CSS-only, progressive via @supports) ---- */
+    .progress {
+      position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+      transform-origin: 0 50%; transform: scaleX(0); pointer-events: none; display: none;
+      background: linear-gradient(90deg, var(--accent), var(--accent-3));
+    }
+    @supports (animation-timeline: scroll()) {
+      .progress { display: block; animation: jt-bar-grow linear both; animation-timeline: scroll(root); }
+    }
+    @keyframes jt-bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+    /* ---- Focus + press feedback (last, to win specificity ties vs :hover) ---- */
+    :focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; border-radius: 4px; }
+    .nav-gh { transition: border-color 160ms ease, color 160ms ease, transform .16s var(--ease-out); }
+    .btn:active, .nav-gh:active { transform: scale(.97); }
   </style>
 </head>
 <body>
@@ -226,6 +286,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
       </a>
     </div>
+    <div class="progress" aria-hidden="true"></div>
   </nav>
 
   <!-- HERO -->
@@ -264,7 +325,22 @@
   <!-- DASHBOARD SHOWCASE -->
   <section id="dashboard" class="section" style="padding-top:42px; padding-bottom:36px;">
     <div class="maxw">
-      <div class="frame reveal">
+      <div class="frame">
+        <div class="frame-bar">
+          <span class="dot" style="background:#F85149"></span>
+          <span class="dot" style="background:#E0A100"></span>
+          <span class="dot" style="background:#3FB950"></span>
+          <span class="label">JobTracker — Live demo</span>
+          <span class="live-tag">● live</span>
+        </div>
+        <div class="demo-slides" role="img" aria-label="Animated demo of JobTracker cycling through the dashboard, application form, and skills views">
+          <img src="screenshots/demo-1.png" alt="" class="s1" />
+          <img src="screenshots/demo-2.png" alt="" class="s2" />
+          <img src="screenshots/demo-3.png" alt="" class="s3" />
+        </div>
+      </div>
+
+      <div class="frame">
         <div class="frame-bar">
           <span class="dot" style="background:#F85149"></span>
           <span class="dot" style="background:#E0A100"></span>
@@ -274,7 +350,7 @@
         <img src="screenshots/dashboard-table.png" alt="JobTracker dashboard, sortable table view" loading="lazy" />
       </div>
 
-      <div class="frame reveal">
+      <div class="frame">
         <div class="frame-bar">
           <span class="dot" style="background:#F85149"></span>
           <span class="dot" style="background:#E0A100"></span>
@@ -290,25 +366,25 @@
   <section id="features" class="section" style="padding-top:8px; padding-bottom:16px;">
     <div class="maxw">
       <div class="head" style="margin-bottom:34px;">
-        <div class="overline">What it does</div>
+        <div class="overline"><b>01</b> · What it does</div>
         <h2>Three things, done properly</h2>
       </div>
       <div class="features">
-        <div class="fcard reveal">
+        <div class="fcard">
           <div class="ico teal">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 4v16"/><rect x="4.7" y="7" width="2.6" height="4" rx="0.7" fill="currentColor" stroke="none"/><rect x="10.7" y="7" width="2.6" height="6.5" rx="0.7" fill="currentColor" stroke="none"/><rect x="16.7" y="7" width="2.6" height="3" rx="0.7" fill="currentColor" stroke="none"/></svg>
           </div>
           <h3>Kanban board</h3>
           <p>Move applications Applied → Interview → Offer, or flip to a sortable table — one click toggles the view.</p>
         </div>
-        <div class="fcard reveal">
+        <div class="fcard">
           <div class="ico violet">
             <svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M12.2 2.3 6.1 4.1c-.5.15-.86.55-.95 1.05L3.9 11.2c-.08.46.07.93.4 1.25l5.9 5.6c.6.57 1.57.43 1.98-.28l4.7-8.1c.22-.38.25-.84.08-1.25l-2.6-6.0a1.3 1.3 0 0 0-2.04-.55Z" fill="#9684EC"/><path d="M12.2 2.3 6.1 4.1c-.5.15-.86.55-.95 1.05L3.9 11.2c-.08.46.07.93.4 1.25l5.9 5.6 1.6-7.2-1.6-8.55Z" fill="#7C66E0"/><path d="m9.7 10.85 2.2-7.6 3.8 5.9-6 1.7Z" fill="#5F49C4" opacity=".55"/></svg>
           </div>
           <h3>Obsidian sync</h3>
           <p>Each application writes a structured markdown file to your vault — with a protected User Notes section that survives every re-sync.</p>
         </div>
-        <div class="fcard reveal">
+        <div class="fcard">
           <div class="ico teal">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><text x="11.6" y="17.8" font-family="var(--font-mono), monospace" font-size="5.4" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle">PDF</text></svg>
           </div>
@@ -321,7 +397,7 @@
 
   <!-- ARCHITECTURE -->
   <section id="architecture" class="section" style="padding-top:36px; padding-bottom:44px;">
-    <div class="maxw arch reveal">
+    <div class="maxw arch">
       <div class="arch-head">
         <h3>Built like production software</h3>
         <span class="tag">Clean Architecture · MVVM</span>
@@ -344,7 +420,7 @@
   <!-- INSTALL NOTE -->
   <section class="section" style="padding-bottom:44px;">
     <div class="maxw head">
-      <div class="overline">Get started</div>
+      <div class="overline"><b>02</b> · Get started</div>
       <h2>Download &amp; run — no installer</h2>
       <div class="note">
         Grab the latest <code>JobTracker.exe</code> from the
@@ -354,6 +430,33 @@
         <strong>Beta note:</strong> the download is currently <strong>unsigned</strong>, so Windows SmartScreen may show a
         “Windows protected your PC” prompt the first time — click <strong>More info → Run anyway</strong>. Code signing is planned after the beta.
       </div>
+    </div>
+  </section>
+
+  <!-- SPONSOR -->
+  <section id="sponsor" class="section" style="text-align:center; padding-top:0; padding-bottom:64px;">
+    <div class="maxw sponsor-box" style="max-width:680px; border-top:1px solid var(--border); padding-top:56px;">
+      <div style="display:inline-flex; align-items:center; gap:10px; margin-bottom:18px;">
+        <svg width="26" height="26" viewBox="0 0 16 16" fill="#e35d6a" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.655 14.916v-.001h-.002l-.006-.003-.018-.01a22.066 22.066 0 0 1-3.744-2.584C2.045 10.73 0 8.354 0 5.5 0 2.836 2.08 1 4.5 1c1.6 0 3.053.799 3.5 2.257C8.447 1.8 9.9 1 11.5 1 13.92 1 16 2.836 16 5.5c0 2.854-2.045 5.23-3.885 6.818a22.068 22.068 0 0 1-3.744 2.584l-.018.01-.006.003h-.002z"/></svg>
+        <span style="font-family:var(--font-display); font-size:1.5rem; font-weight:700; color:#fff;">Support JobTracker</span>
+      </div>
+      <p style="color:var(--text-2); font-size:1.05rem; line-height:1.7; margin-bottom:28px;">
+        JobTracker is free, open-source, and built in spare time.<br>
+        If it helps your job search, consider sponsoring to keep it going — every contribution helps fund new features and maintenance.
+      </p>
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:28px;">
+        <a href="https://github.com/sponsors/juandresrodca" class="btn btn-primary" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="#e35d6a" aria-hidden="true"><path d="M7.655 14.916v-.001h-.002l-.006-.003-.018-.01a22.066 22.066 0 0 1-3.744-2.584C2.045 10.73 0 8.354 0 5.5 0 2.836 2.08 1 4.5 1c1.6 0 3.053.799 3.5 2.257C8.447 1.8 9.9 1 11.5 1 13.92 1 16 2.836 16 5.5c0 2.854-2.045 5.23-3.885 6.818a22.068 22.068 0 0 1-3.744 2.584l-.018.01-.006.003h-.002z"/></svg>
+          Sponsor on GitHub
+        </a>
+        <a href="https://github.com/juandresrodca/job-application-tracker" class="btn btn-ghost" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-faint);">
+        MIT licensed · Free forever · No account required to use
+      </p>
     </div>
   </section>
 
@@ -395,49 +498,38 @@
       });
     }
 
-    // Scroll-reveal: fade/rise sections in as they enter the viewport.
-    var els = document.querySelectorAll('.reveal');
+    // Scroll-reveal, progressive: JS adds the hiding class, so without JS (or with
+    // reduced motion) nothing is ever hidden. Feature cards stagger 60ms apart.
     if (!reduce && 'IntersectionObserver' in window) {
+      document.querySelectorAll('.frame, .arch, .sponsor-box').forEach(function (el) {
+        el.classList.add('reveal');
+      });
+      document.querySelectorAll('.features .fcard').forEach(function (el, i) {
+        el.classList.add('reveal');
+        el.style.setProperty('--d', (i * 60) + 'ms');
+      });
+
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
           if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
         });
-      }, { threshold: 0.12 });
-      els.forEach(function (el) { io.observe(el); });
-    } else {
-      els.forEach(function (el) { el.classList.add('in'); });
+      }, { rootMargin: '0px 0px -40px 0px', threshold: 0.1 });
+      document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+    }
+
+    // Card spotlight follows the cursor — real pointers only
+    if (window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches) {
+      document.querySelectorAll('.fcard').forEach(function (c) {
+        c.addEventListener('pointermove', function (e) {
+          var r = c.getBoundingClientRect();
+          c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+          c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+        }, { passive: true });
+      });
     }
   })();
   </script>
 
-
-<!-- ═══════════ SPONSOR SECTION ═══════════ -->
-<section id="sponsor" class="section reveal" style="text-align:center; padding: 80px 40px; border-top: 1px solid var(--border);">
-  <div class="maxw" style="max-width: 680px;">
-    <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:18px;">
-      <svg width="28" height="28" viewBox="0 0 16 16" fill="#e35d6a" xmlns="http://www.w3.org/2000/svg"><path d="M7.655 14.916v-.001h-.002l-.006-.003-.018-.01a22.066 22.066 0 0 1-3.744-2.584C2.045 10.73 0 8.354 0 5.5 0 2.836 2.08 1 4.5 1c1.6 0 3.053.799 3.5 2.257C8.447 1.8 9.9 1 11.5 1 13.92 1 16 2.836 16 5.5c0 2.854-2.045 5.23-3.885 6.818a22.068 22.068 0 0 1-3.744 2.584l-.018.01-.006.003h-.002zM11.5 2C9.236 2 8 3.851 8 5h1a2.5 2.5 0 0 1 5 0h1C15 3.851 13.764 2 11.5 2z"/></svg>
-      <span style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:#fff;">Support JobTracker</span>
-    </div>
-    <p style="color:var(--text-2);font-size:1.05rem;line-height:1.7;margin-bottom:28px;">
-      JobTracker is free, open-source, and built in spare time.<br>
-      If it helps your job search, consider sponsoring to keep it going — every contribution helps fund new features and maintenance.
-    </p>
-    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:28px;">
-      <a href="https://github.com/sponsors/juandresrodca" class="btn btn-primary" style="background:#e35d6a;border-color:#e35d6a;color:#fff;" target="_blank" rel="noopener">
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M7.655 14.916v-.001h-.002l-.006-.003-.018-.01a22.066 22.066 0 0 1-3.744-2.584C2.045 10.73 0 8.354 0 5.5 0 2.836 2.08 1 4.5 1c1.6 0 3.053.799 3.5 2.257C8.447 1.8 9.9 1 11.5 1 13.92 1 16 2.836 16 5.5c0 2.854-2.045 5.23-3.885 6.818a22.068 22.068 0 0 1-3.744 2.584l-.018.01-.006.003h-.002z"/></svg>
-        Sponsor on GitHub
-      </a>
-      <a href="https://github.com/juandresrodca/job-application-tracker" class="btn btn-ghost" target="_blank" rel="noopener">
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-        Star on GitHub
-      </a>
-    </div>
-    <p style="font-size:0.82rem;color:var(--text-faint);">
-      MIT licensed · Free forever · No account required to use
-    </p>
-  </div>
-</section>
-<!-- ═══════════ END SPONSOR SECTION ═══════════ -->
 
 </body>
 </html>

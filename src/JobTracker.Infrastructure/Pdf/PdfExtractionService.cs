@@ -1,15 +1,14 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using JobTracker.Application.Interfaces;
-using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas.Parser;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
+using UglyToad.PdfPig;
 
 namespace JobTracker.Infrastructure.Pdf;
 
 /// <summary>
 /// Service for extracting text and structured data from PDF files.
-/// Uses iText7 library for reliable .NET PDF text extraction.
+/// Uses PdfPig (Apache-2.0) for .NET PDF text extraction — license-compatible
+/// with this MIT-licensed app, unlike the previously used iText7 (AGPL).
 /// </summary>
 public class PdfExtractionService : IPdfExtractionService
 {
@@ -60,16 +59,10 @@ public class PdfExtractionService : IPdfExtractionService
     {
         var sb = new StringBuilder();
 
-        using (var pdfReader = new PdfReader(filePath))
-        using (var pdfDocument = new PdfDocument(pdfReader))
+        using (var document = PdfDocument.Open(filePath))
         {
-            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
-            {
-                var page = pdfDocument.GetPage(i);
-                var strategy = new SimpleTextExtractionStrategy();
-                var text = PdfTextExtractor.GetTextFromPage(page, strategy);
-                sb.AppendLine(text);
-            }
+            foreach (var page in document.GetPages())
+                sb.AppendLine(page.Text);
         }
 
         return sb.ToString().Trim();

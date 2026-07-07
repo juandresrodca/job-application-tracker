@@ -24,13 +24,13 @@ public class EmailExtractionService : IEmailExtractionService
     {
         // "your application for <Role> at|with Company"
         var m = Regex.Match(text,
-            @"application\s+(?:for\s+(?:the\s+)?|to\s+the\s+position\s+of\s+)([^,\n@]{3,80?}?)\s+(?:at|with|to|@)\s+",
+            @"application\s+(?:for\s+(?:the\s+)?|to\s+the\s+position\s+of\s+)([^,\n@]{3,80}?)\s+(?:at|with|to|@)\s+",
             RegexOptions.IgnoreCase);
         if (m.Success) return Clean(m.Groups[1].Value);
 
         // "applied for the <Role> position"
         m = Regex.Match(text,
-            @"applied\s+for\s+(?:the\s+)?([^,\n]{3,80?}?)\s+(?:position|role|job|opportunity)",
+            @"applied\s+for\s+(?:the\s+)?([^,\n]{3,80}?)\s+(?:position|role|job|opportunity)",
             RegexOptions.IgnoreCase);
         if (m.Success) return Clean(m.Groups[1].Value);
 

@@ -18,6 +18,7 @@ public class ApplicationFormViewModel : ViewModelBase
     private readonly ISettingsService _settings;
     private readonly IPdfExtractionService _pdfExtraction;
     private readonly IEmailExtractionService _emailExtraction;
+    private readonly IMatchScoreService _matchScore;
     private readonly IDialogService _dialogService;
 
     private int? _editingId;
@@ -38,7 +39,35 @@ public class ApplicationFormViewModel : ViewModelBase
     }
 
     private string _jobDescription = string.Empty;
-    public string JobDescription { get => _jobDescription; set => SetField(ref _jobDescription, value); }
+    public string JobDescription
+    {
+        get => _jobDescription;
+        set { SetField(ref _jobDescription, value); RecomputeMatchScore(); }
+    }
+
+    // ── Match score (offline skills ↔ job description comparison) ───────────
+    private MatchScoreResult _matchResult = MatchScoreResult.Empty;
+
+    public bool HasMatchScore => _matchResult.HasDetections;
+
+    public string MatchScoreText => !HasMatchScore
+        ? string.Empty
+        : $"Match: {_matchResult.ScorePercent}% — {_matchResult.MatchedSkills.Count}/{_matchResult.MatchedSkills.Count + _matchResult.MissingSkills.Count} skills mentioned in this posting are ticked";
+
+    public string MissingSkillsText => _matchResult.MissingSkills.Count == 0
+        ? string.Empty
+        : $"Mentioned but not ticked: {string.Join(", ", _matchResult.MissingSkills)}";
+
+    private void RecomputeMatchScore()
+    {
+        _matchResult = _matchScore.Compute(
+            JobDescription,
+            Skills.Select(s => new SkillMatchInput(s.Name, s.IsSelected)));
+
+        OnPropertyChanged(nameof(HasMatchScore));
+        OnPropertyChanged(nameof(MatchScoreText));
+        OnPropertyChanged(nameof(MissingSkillsText));
+    }
 
     private CompanyDto? _selectedCompany;
     public CompanyDto? SelectedCompany
@@ -145,6 +174,7 @@ public class ApplicationFormViewModel : ViewModelBase
         ISettingsService settings,
         IPdfExtractionService pdfExtraction,
         IEmailExtractionService emailExtraction,
+        IMatchScoreService matchScore,
         IDialogService dialogService)
     {
         _appService = appService;
@@ -154,6 +184,7 @@ public class ApplicationFormViewModel : ViewModelBase
         _settings = settings;
         _pdfExtraction = pdfExtraction;
         _emailExtraction = emailExtraction;
+        _matchScore = matchScore;
         _dialogService = dialogService;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !string.IsNullOrWhiteSpace(RoleName) && SelectedCompany is not null);
@@ -218,6 +249,24 @@ public class ApplicationFormViewModel : ViewModelBase
         await LoadReferenceDataAsync();
     }
 
+    /// <summary>New-application form pre-filled from a discovered job-board listing.</summary>
+    public async Task InitializeFromDiscoveryAsync(string roleName, string? description, string? url)
+    {
+        await LoadReferenceDataAsync();
+
+        RoleName = roleName;
+        JobPostingUrl = url ?? string.Empty;
+        JobDescription = description ?? string.Empty; // also triggers the match score
+
+        // Pre-tick the skills the posting mentions so the user starts from a sensible state
+        foreach (var skill in Skills)
+        {
+            if (_matchResult.MatchedSkills.Contains(skill.Name) ||
+                _matchResult.MissingSkills.Contains(skill.Name))
+                skill.IsSelected = true;
+        }
+    }
+
     private async Task LoadReferenceDataAsync()
     {
         var companies = await _companyRepo.GetAllAsync();
@@ -233,7 +282,18 @@ public class ApplicationFormViewModel : ViewModelBase
         var skills = await _skillRepo.GetAllAsync();
         Skills.Clear();
         foreach (var s in skills)
-            Skills.Add(new SkillSelectionItem(s.Id, s.Name, s.Category ?? string.Empty));
+        {
+            var item = new SkillSelectionItem(s.Id, s.Name, s.Category ?? string.Empty);
+            // Keep the match score live as the user ticks/unticks skills
+            item.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(SkillSelectionItem.IsSelected))
+                    RecomputeMatchScore();
+            };
+            Skills.Add(item);
+        }
+
+        RecomputeMatchScore();
     }
 
     private async Task SaveAsync()

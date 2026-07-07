@@ -83,6 +83,10 @@
                             Style="{StaticResource NavButton}"
                             Command="{Binding NavigateCommand}"
                             CommandParameter="Skills"/>
+                    <Button Content="🔎  Discover"
+                            Style="{StaticResource NavButton}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="Discover"/>
                     <Button Content="⚙️  Settings"
                             Style="{StaticResource NavButton}"
                             Command="{Binding NavigateCommand}"

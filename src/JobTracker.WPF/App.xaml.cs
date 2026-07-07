@@ -4,6 +4,7 @@ using JobTracker.Application.Interfaces;
 using JobTracker.Application.Services;
 using JobTracker.Domain.Interfaces;
 using JobTracker.Infrastructure.Data;
+using JobTracker.Infrastructure.Discovery;
 using JobTracker.Infrastructure.Email;
 using JobTracker.Infrastructure.Markdown;
 using JobTracker.Infrastructure.Pdf;
@@ -31,29 +32,62 @@ public partial class App : System.Windows.Application
         // Global exception handlers — prevent silent crashes
         DispatcherUnhandledException += (_, ex) =>
         {
+            LogError("Dispatcher", ex.Exception);
             MessageBox.Show($"An unexpected error occurred:\n\n{ex.Exception.Message}",
                 "Job Tracker — Error", MessageBoxButton.OK, MessageBoxImage.Error);
             ex.Handled = true;
         };
         TaskScheduler.UnobservedTaskException += (_, ex) =>
         {
+            LogError("UnobservedTask", ex.Exception);
             ex.SetObserved(); // Don't crash on unobserved task exceptions
         };
 
-        var services = new ServiceCollection();
-        ConfigureServices(services);
-        _services = services.BuildServiceProvider();
+        // OnStartup is async void: any exception past the first await would otherwise
+        // kill the process with no dialog (it bypasses DispatcherUnhandledException).
+        try
+        {
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            _services = services.BuildServiceProvider();
 
-        // Initialize DB schema
-        var db = _services.GetRequiredService<DatabaseContext>();
-        await db.InitializeAsync();
+            // Initialize DB schema
+            var db = _services.GetRequiredService<DatabaseContext>();
+            await db.InitializeAsync();
 
-        // Seed default skills and demo data
-        await SeedDefaultDataAsync();
-        await SeedDemoApplicationsAsync();
+            // Seed default skills
+            await SeedDefaultDataAsync();
 
-        var mainWindow = _services.GetRequiredService<MainWindow>();
-        mainWindow.Show();
+            var mainWindow = _services.GetRequiredService<MainWindow>();
+            mainWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            LogError("Startup", ex);
+            MessageBox.Show(
+                $"Job Tracker could not start:\n\n{ex.Message}\n\nDetails were written to the log folder:\n{LogDirectory}",
+                "Job Tracker — Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+        }
+    }
+
+    // ── Minimal file logging (no external dependencies) ──────────────────────
+    private static string LogDirectory =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                     "JobTracker", "logs");
+
+    private static void LogError(string source, Exception ex)
+    {
+        try
+        {
+            Directory.CreateDirectory(LogDirectory);
+            var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{source}] {ex}\n";
+            File.AppendAllText(Path.Combine(LogDirectory, "app.log"), line);
+        }
+        catch
+        {
+            // Logging must never take the app down.
+        }
     }
 
     private static void ConfigureServices(IServiceCollection services)
@@ -65,17 +99,21 @@ public partial class App : System.Windows.Application
 
         services.AddSingleton(new DatabaseContext(dbPath));
 
-        services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
-        services.AddScoped<ICompanyRepository,        CompanyRepository>();
-        services.AddScoped<IContactRepository,        ContactRepository>();
-        services.AddScoped<ISkillRepository,          SkillRepository>();
+        // Transient, not Scoped: no DI scopes are ever created in this app, so Scoped
+        // would silently behave as Singleton. These are stateless (connection-per-call).
+        services.AddTransient<IJobApplicationRepository, JobApplicationRepository>();
+        services.AddTransient<ICompanyRepository,        CompanyRepository>();
+        services.AddTransient<IContactRepository,        ContactRepository>();
+        services.AddTransient<ISkillRepository,          SkillRepository>();
 
         // ── Application Services ──────────────────────────────────────────
         services.AddSingleton<ISettingsService,    SettingsService>();
-        services.AddScoped<IMarkdownSyncService,   MarkdownSyncService>();
-        services.AddScoped<IPdfExtractionService,  PdfExtractionService>();
-        services.AddScoped<IEmailExtractionService, EmailExtractionService>();
-        services.AddScoped<IJobApplicationService, JobApplicationService>();
+        services.AddTransient<IMarkdownSyncService,   MarkdownSyncService>();
+        services.AddTransient<IPdfExtractionService,  PdfExtractionService>();
+        services.AddTransient<IEmailExtractionService, EmailExtractionService>();
+        services.AddSingleton<IMatchScoreService,  MatchScoreService>();
+        services.AddSingleton<IJobDiscoveryService, GreenhouseDiscoveryService>();
+        services.AddTransient<IJobApplicationService, JobApplicationService>();
 
         // ── WPF Services ──────────────────────────────────────────────────
         services.AddSingleton<IDialogService, WpfDialogService>();
@@ -88,6 +126,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<CompaniesViewModel>();
         services.AddTransient<ContactsViewModel>();
         services.AddTransient<SkillsViewModel>();
+        services.AddTransient<DiscoverViewModel>();
 
         // ── WPF Pages ─────────────────────────────────────────────────────
         services.AddTransient<DashboardPage>();
@@ -96,6 +135,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<CompaniesPage>();
         services.AddTransient<ContactsPage>();
         services.AddTransient<SkillsPage>();
+        services.AddTransient<DiscoverPage>();
     }
 
     private async Task SeedDefaultDataAsync()
@@ -138,41 +178,4 @@ public partial class App : System.Windows.Application
             await skillRepo.AddAsync(new Domain.Entities.Skill { Name = name, Category = category });
     }
 
-    private async Task SeedDemoApplicationsAsync()
-    {
-        var appService = _services.GetRequiredService<IJobApplicationService>();
-        var companyRepo = _services.GetRequiredService<ICompanyRepository>();
-        
-        var apps = await appService.GetAllApplicationsAsync();
-        if (apps.Any()) return;
-
-        // Ensure companies exist
-        var companies = await companyRepo.GetAllAsync();
-        if (!companies.Any())
-        {
-            await companyRepo.AddAsync(new Domain.Entities.Company { Name = "Tech Corp", Industry = "Software", Location = "London" });
-            await companyRepo.AddAsync(new Domain.Entities.Company { Name = "Data Solutions", Industry = "Analytics", Location = "New York" });
-            await companyRepo.AddAsync(new Domain.Entities.Company { Name = "InnovateX", Industry = "AI & Robotics", Location = "Berlin" });
-            companies = await companyRepo.GetAllAsync();
-        }
-
-        var techCorp = companies.First(c => c.Name == "Tech Corp");
-        var dataSol = companies.First(c => c.Name == "Data Solutions");
-        var innovX = companies.First(c => c.Name == "InnovateX");
-
-        await appService.CreateAsync(new Application.DTOs.CreateJobApplicationRequest(
-            "Senior Software Engineer", "Experienced C# developer needed...", techCorp.Id, null,
-            Domain.Enums.ApplicationStatus.Applied, DateTime.Today.AddDays(-5), true, "£80k-£100k", "Remote position", "https://techcorp.com/jobs/1",
-            new List<int>()));
-
-        await appService.CreateAsync(new Application.DTOs.CreateJobApplicationRequest(
-            "Cloud Architect", "Looking for Azure expert...", dataSol.Id, null,
-            Domain.Enums.ApplicationStatus.Interview, DateTime.Today.AddDays(-2), false, "$150k", "Office based", "https://datasolutions.com/careers/2",
-            new List<int>()));
-
-        await appService.CreateAsync(new Application.DTOs.CreateJobApplicationRequest(
-            "DevOps Engineer", "Kubernetes and CI/CD focus...", innovX.Id, null,
-            Domain.Enums.ApplicationStatus.Offer, DateTime.Today.AddDays(-10), true, "€75k", "Great benefits", "https://innovatex.io/job/3",
-            new List<int>()));
-    }
 }
