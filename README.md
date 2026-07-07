@@ -5,13 +5,13 @@
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple?logo=dotnet)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue?logo=windows)](#installing-the-beta)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.0--beta-orange)](https://github.com/juandresrodca/job-application-tracker/releases/latest)
+[![Version](https://img.shields.io/badge/version-0.2.0--beta-orange)](https://github.com/juandresrodca/job-application-tracker/releases/latest)
 [![Website](https://img.shields.io/badge/website-live-14A38E)](https://juandresrodca.github.io/job-application-tracker/)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-e35d6a?logo=githubsponsors)](https://github.com/sponsors/juandresrodca)
 
 A production-quality .NET 8 WPF desktop application for tracking job applications with Obsidian vault sync.
 
-> **Beta v0.1.0** — fully functional with Companies, Contacts, Skills management, Kanban board view, PDF extraction, email import, Obsidian sync, and a full test suite.
+> **Beta v0.2.0** — fully functional with Companies, Contacts, Skills management, Kanban board view, PDF extraction, email import, Obsidian sync, and a full test suite.
 
 [**⬇ Download latest**](https://github.com/juandresrodca/job-application-tracker/releases/latest) · [**🌐 Website**](https://juandresrodca.github.io/job-application-tracker/) · [**🐛 Report a bug**](https://github.com/juandresrodca/job-application-tracker/issues/new?template=bug_report.md) · [**💡 Feature request**](https://github.com/juandresrodca/job-application-tracker/issues/new?template=feature_request.md)
 
@@ -31,7 +31,7 @@ A production-quality .NET 8 WPF desktop application for tracking job application
     - [Dashboard — Table View](#dashboard--table-view)
     - [Dashboard — Kanban Board](#dashboard--kanban-board)
     - [Application Form](#application-form)
-  - [Features (v0.1.0)](#features-v010)
+  - [Features (v0.2.0)](#features-v020)
   - [Architecture Decision: Why MVVM + WPF?](#architecture-decision-why-mvvm--wpf)
   - [Project Structure](#project-structure)
   - [Prerequisites](#prerequisites)
@@ -79,8 +79,11 @@ Comprehensive job application form with PDF extraction, skill tracking, and comp
 
 ---
 
-## Features (v0.1.0)
+## Features (v0.2.0)
 
+- **Follow-up nudges** *(new in 0.2.0)* — active applications quiet for 14+ days get a ⏰ reminder and their own stat card
+- **Offline match score** *(new in 0.2.0)* — the form live-scores the job description against your skill catalog, no AI or network needed
+- **Job discovery** *(new in 0.2.0, opt-in)* — fetch a company's public Greenhouse board, rank roles by skill relevance, track one in a click
 - **Companies / Contacts / Skills** — full CRUD pages with inline edit panels
 - **Dashboard views** — table and Kanban board toggle
 - **Application tracking** — full job application lifecycle from Applied → Interview → Offer/Rejected

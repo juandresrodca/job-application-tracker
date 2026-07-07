@@ -10,9 +10,9 @@
     <RootNamespace>JobTracker.WPF</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Version info -->
-    <Version>0.1.0-beta</Version>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.1.0.0</FileVersion>
+    <Version>0.2.0-beta</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
     <Product>Job Application Tracker</Product>
     <Copyright>MIT License 2025-2026</Copyright>
     <Description>WPF desktop app for tracking job applications with Obsidian vault sync.</Description>
