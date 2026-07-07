@@ -223,7 +223,8 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <DatePicker Grid.Column="0" SelectedDate="{Binding NewInterviewDate}" Width="130" Margin="0,0,8,0"/>
+                            <DatePicker Grid.Column="0" SelectedDate="{Binding NewInterviewDate}" Width="140" Margin="0,0,8,0"
+                                        Style="{StaticResource FormDatePicker}"/>
                             <TextBox Grid.Column="1" Text="{Binding NewInterviewTime}" Width="60" Margin="0,0,8,0"
                                      Style="{StaticResource FormTextBox}" ToolTip="Time (HH:mm)"/>
                             <ComboBox Grid.Column="2" ItemsSource="{Binding AllInterviewTypes}"

@@ -1,23 +1,28 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using JobTracker.WPF.ViewModels;
+using Microsoft.Web.WebView2.Wpf;
 
 namespace JobTracker.WPF.Views.Pages;
 
 public partial class DiscoverPage : Page
 {
     private readonly DiscoverViewModel _vm;
-    private bool _webViewReady;
-    private bool _webViewFailed;
+    private readonly ObservableCollection<BrowserTabVm> _tabs = new();
+    private BrowserTabVm? _activeTab;
+    private bool _engineStarted;
+    private bool _engineFailed;
 
     public DiscoverPage(DiscoverViewModel vm)
     {
         InitializeComponent();
         _vm = vm;
         DataContext = _vm;
+        TabStrip.ItemsSource = _tabs;
 
         _vm.TrackRequested += job =>
         {
@@ -35,35 +40,123 @@ public partial class DiscoverPage : Page
         };
     }
 
+    // ── Tab management ───────────────────────────────────────────────────────
+
     private async Task EnsureBrowserAsync()
     {
-        if (_webViewReady || _webViewFailed) return;
+        if (_engineStarted || _engineFailed) return;
+        _engineStarted = true;
+
+        var first = await CreateTabAsync(activate: true);
+        if (first is null) return;
+
+        // Land somewhere useful on first open
+        if (_vm.SelectedSite is null && _vm.SitePresets.Count > 0)
+            _vm.SelectedSite = _vm.SitePresets[0]; // setter triggers NavigateRequested
+    }
+
+    private async Task<BrowserTabVm?> CreateTabAsync(bool activate)
+    {
+        var view = new WebView2 { Visibility = Visibility.Collapsed };
+        BrowserHost.Children.Insert(0, view); // error overlay stays on top
+
         try
         {
-            await Browser.EnsureCoreWebView2Async();
-            _webViewReady = true;
-
-            Browser.CoreWebView2.SourceChanged += (_, _) =>
-                _vm.CurrentUrl = Browser.CoreWebView2.Source;
-
-            // Land somewhere useful on first open
-            if (_vm.SelectedSite is null && _vm.SitePresets.Count > 0)
-                _vm.SelectedSite = _vm.SitePresets[0];
+            await view.EnsureCoreWebView2Async();
         }
         catch
         {
-            _webViewFailed = true;
+            BrowserHost.Children.Remove(view);
+            _engineFailed = true;
             WebViewError.Visibility = Visibility.Visible;
             _vm.CopilotStatus = "WebView2 Runtime is not installed — see the panel for instructions.";
+            return null;
         }
+
+        var tab = new BrowserTabVm(view);
+
+        view.CoreWebView2.DocumentTitleChanged += (_, _) =>
+        {
+            var t = view.CoreWebView2.DocumentTitle;
+            tab.Title = string.IsNullOrWhiteSpace(t) ? "New tab" : t;
+        };
+
+        view.CoreWebView2.SourceChanged += (_, _) =>
+        {
+            if (tab.IsActive) _vm.CurrentUrl = view.CoreWebView2.Source;
+        };
+
+        // Popups ("Apply on company site", OAuth logins…) open as a new tab, so the
+        // co-pilot keeps working — this was impossible with detached OS windows.
+        view.CoreWebView2.NewWindowRequested += async (_, e) =>
+        {
+            var deferral = e.GetDeferral();
+            try
+            {
+                var newTab = await CreateTabAsync(activate: true);
+                if (newTab is not null)
+                {
+                    e.NewWindow = newTab.View.CoreWebView2;
+                    e.Handled = true;
+                }
+            }
+            finally
+            {
+                deferral.Complete();
+            }
+        };
+
+        _tabs.Add(tab);
+        if (activate) ActivateTab(tab);
+        return tab;
     }
+
+    private void ActivateTab(BrowserTabVm tab)
+    {
+        _activeTab = tab;
+        foreach (var t in _tabs)
+        {
+            t.IsActive = ReferenceEquals(t, tab);
+            t.View.Visibility = t.IsActive ? Visibility.Visible : Visibility.Collapsed;
+        }
+        if (tab.View.CoreWebView2 is not null)
+            _vm.CurrentUrl = tab.View.CoreWebView2.Source ?? string.Empty;
+    }
+
+    private void CloseTab(BrowserTabVm tab)
+    {
+        if (_tabs.Count <= 1) return; // always keep one tab alive
+
+        var index = _tabs.IndexOf(tab);
+        _tabs.Remove(tab);
+        BrowserHost.Children.Remove(tab.View);
+        tab.View.Dispose();
+
+        if (ReferenceEquals(_activeTab, tab))
+            ActivateTab(_tabs[Math.Clamp(index - 1, 0, _tabs.Count - 1)]);
+    }
+
+    private void Tab_Click(object sender, MouseButtonEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is BrowserTabVm tab)
+            ActivateTab(tab);
+    }
+
+    private void TabClose_Click(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true; // don't also activate the tab we're closing
+        if ((sender as FrameworkElement)?.Tag is BrowserTabVm tab)
+            CloseTab(tab);
+    }
+
+    // ── Navigation ───────────────────────────────────────────────────────────
 
     private void Navigate(string url)
     {
-        if (!_webViewReady || string.IsNullOrWhiteSpace(url)) return;
+        if (_activeTab?.View.CoreWebView2 is null || string.IsNullOrWhiteSpace(url)) return;
         if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             url = "https://" + url;
-        try { Browser.CoreWebView2.Navigate(url); }
+        try { _activeTab.View.CoreWebView2.Navigate(url); }
         catch { _vm.CopilotStatus = "Could not open that address — check the URL."; }
     }
 
@@ -76,7 +169,8 @@ public partial class DiscoverPage : Page
 
     private void BrowserBack_Click(object sender, RoutedEventArgs e)
     {
-        if (_webViewReady && Browser.CoreWebView2.CanGoBack) Browser.CoreWebView2.GoBack();
+        var core = _activeTab?.View.CoreWebView2;
+        if (core is not null && core.CanGoBack) core.GoBack();
     }
 
     // ── Co-pilot: scan the visible page ──────────────────────────────────────
@@ -121,12 +215,13 @@ public partial class DiscoverPage : Page
 
     private async void ScanPage_Click(object sender, RoutedEventArgs e)
     {
-        if (!_webViewReady) { _vm.CopilotStatus = "Browser is not ready yet."; return; }
+        var core = _activeTab?.View.CoreWebView2;
+        if (core is null) { _vm.CopilotStatus = "Browser is not ready yet."; return; }
 
         try
         {
             _vm.CopilotStatus = "Scanning page…";
-            var raw = await Browser.CoreWebView2.ExecuteScriptAsync(ExtractScript);
+            var raw = await core.ExecuteScriptAsync(ExtractScript);
 
             // ExecuteScriptAsync JSON-encodes the script's return value (itself a JSON string)
             var inner = JsonSerializer.Deserialize<string>(raw);
@@ -138,7 +233,7 @@ public partial class DiscoverPage : Page
                 return;
             }
 
-            await _vm.ApplyScanAsync(scan.title, scan.company, scan.description, Browser.CoreWebView2.Source);
+            await _vm.ApplyScanAsync(scan.title, scan.company, scan.description, core.Source);
         }
         catch (Exception ex)
         {
@@ -149,7 +244,8 @@ public partial class DiscoverPage : Page
     // ── Co-pilot: highlight the user's skills inside the live page ──────────
     private async void Highlight_Click(object sender, RoutedEventArgs e)
     {
-        if (!_webViewReady || _vm.ScannedSkills.Count == 0)
+        var core = _activeTab?.View.CoreWebView2;
+        if (core is null || _vm.ScannedSkills.Count == 0)
         {
             _vm.CopilotStatus = "Scan the page first — highlighting uses the skills found in the posting.";
             return;
@@ -185,7 +281,7 @@ public partial class DiscoverPage : Page
 
         try
         {
-            var raw = await Browser.CoreWebView2.ExecuteScriptAsync(script);
+            var raw = await core.ExecuteScriptAsync(script);
             _vm.CopilotStatus = $"Highlighted {raw} skill mention(s) on the page.";
         }
         catch (Exception ex)
@@ -196,7 +292,7 @@ public partial class DiscoverPage : Page
 
     private void TrackScanned_Click(object sender, RoutedEventArgs e) => _vm.TrackScanned();
 
-    // ── Boards mode handlers (unchanged) ─────────────────────────────────────
+    // ── Boards mode handlers ─────────────────────────────────────────────────
     private void OpenJob_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.Tag is not DiscoveredJobVm job) return;
@@ -208,4 +304,18 @@ public partial class DiscoverPage : Page
         if ((sender as FrameworkElement)?.Tag is not DiscoveredJobVm job) return;
         _vm.RequestTrack(job);
     }
+}
+
+/// <summary>One tab of the co-pilot's embedded browser.</summary>
+public class BrowserTabVm : ViewModelBase
+{
+    public BrowserTabVm(WebView2 view) => View = view;
+
+    public WebView2 View { get; }
+
+    private string _title = "New tab";
+    public string Title { get => _title; set => SetField(ref _title, value); }
+
+    private bool _isActive;
+    public bool IsActive { get => _isActive; set => SetField(ref _isActive, value); }
 }

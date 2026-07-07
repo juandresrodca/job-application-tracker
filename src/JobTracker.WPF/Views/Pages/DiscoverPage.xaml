@@ -129,21 +129,63 @@
                 <ColumnDefinition Width="*" MinWidth="270"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Embedded browser -->
+            <!-- Embedded browser with tabs: popups ("Apply on company site") open as a
+                 new tab, so the co-pilot panel always works on whatever tab is active -->
             <Border Grid.Column="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                     CornerRadius="8" Margin="0,0,12,0">
-                <Grid>
-                    <wv2:WebView2 x:Name="Browser"/>
-                    <!-- Shown if the WebView2 runtime is missing -->
-                    <Border x:Name="WebViewError" Visibility="Collapsed"
-                            Background="{StaticResource SurfaceBrush}" Padding="24">
-                        <StackPanel VerticalAlignment="Center" MaxWidth="420">
-                            <TextBlock Text="Browser engine not available" Style="{StaticResource SectionHeader}"/>
-                            <TextBlock Style="{StaticResource SubtleText}" TextWrapping="Wrap" Margin="0,8,0,0"
-                                       Text="The co-pilot needs the Microsoft Edge WebView2 Runtime, which is pre-installed on up-to-date Windows 10/11. Install it from Microsoft's site (search 'WebView2 Runtime download') and reopen this page."/>
-                        </StackPanel>
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceBrush}"
+                            Padding="4" CornerRadius="8,8,0,0">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl x:Name="TabStrip">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="5" Padding="8,4" Margin="0,0,4,0" Cursor="Hand"
+                                                MouseLeftButtonDown="Tab_Click" Tag="{Binding}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Title}" MaxWidth="150"
+                                                           TextTrimming="CharacterEllipsis" FontSize="12"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center"
+                                                           ToolTip="{Binding Title}"/>
+                                                <TextBlock Text="  ✕" FontSize="11" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource TextSecondary}" Cursor="Hand"
+                                                           MouseLeftButtonDown="TabClose_Click" Tag="{Binding}"
+                                                           ToolTip="Close tab"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </Border>
-                </Grid>
+                    <Grid x:Name="BrowserHost">
+                        <!-- WebView2 tabs are added here in code-behind; this stays on top -->
+                        <Border x:Name="WebViewError" Visibility="Collapsed" Panel.ZIndex="99"
+                                Background="{StaticResource SurfaceBrush}" Padding="24">
+                            <StackPanel VerticalAlignment="Center" MaxWidth="420">
+                                <TextBlock Text="Browser engine not available" Style="{StaticResource SectionHeader}"/>
+                                <TextBlock Style="{StaticResource SubtleText}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Text="The co-pilot needs the Microsoft Edge WebView2 Runtime, which is pre-installed on up-to-date Windows 10/11. Install it from Microsoft's site (search 'WebView2 Runtime download') and reopen this page."/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </DockPanel>
             </Border>
 
             <!-- Co-pilot panel -->
