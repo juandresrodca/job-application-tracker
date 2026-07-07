@@ -12,12 +12,16 @@ namespace JobTracker.WPF.ViewModels;
 public class DashboardViewModel : ViewModelBase, IRefreshable
 {
     private readonly IJobApplicationService _appService;
+    private readonly IInterviewService _interviewService;
     private readonly IDialogService _dialog;
 
     // ── Observable collections ──────────────────────────────────────────────
     public ObservableCollection<JobApplicationDto> Applications { get; } = new();
     public ObservableCollection<JobApplicationDto> FilteredApplications { get; } = new();
     public ObservableCollection<KanbanColumnVm> KanbanColumns { get; } = new();
+    public ObservableCollection<InterviewDto> UpcomingInterviews { get; } = new();
+
+    public bool HasUpcomingInterviews => UpcomingInterviews.Count > 0;
 
     // ── Filter / sort state ─────────────────────────────────────────────────
     private ApplicationStatus? _statusFilter;
@@ -165,9 +169,10 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
     public event Action<int>? EditApplicationRequested;
     public event Action? NewApplicationRequested;
 
-    public DashboardViewModel(IJobApplicationService appService, IDialogService dialog)
+    public DashboardViewModel(IJobApplicationService appService, IInterviewService interviewService, IDialogService dialog)
     {
         _appService = appService;
+        _interviewService = interviewService;
         _dialog = dialog;
 
         UpdateCurrentWeekNumber();
@@ -240,6 +245,13 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
                 : "—";
 
             ApplyFilters();
+
+            // Upcoming interviews strip (next 14 days, independent of week/global toggle)
+            var upcoming = await _interviewService.GetUpcomingAsync(14);
+            UpcomingInterviews.Clear();
+            foreach (var interview in upcoming.Take(6))
+                UpcomingInterviews.Add(interview);
+            OnPropertyChanged(nameof(HasUpcomingInterviews));
 
             if (IsWeekView)
                 StatusMessage = $"Loaded {source.Count} applications this week";

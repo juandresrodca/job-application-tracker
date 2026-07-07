@@ -171,6 +171,74 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Interviews (edit mode only) -->
+                <Border Style="{StaticResource FormCard}" Margin="0,16,0,0"
+                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="📅 Interviews" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
+
+                        <ItemsControl ItemsSource="{Binding Interviews}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource CardBrush}"
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1" CornerRadius="6"
+                                            Padding="10,7" Margin="0,0,0,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock>
+                                                    <Run Text="{Binding WhenText, Mode=OneWay}" FontWeight="SemiBold"/>
+                                                    <Run Text=" · "/>
+                                                    <Run Text="{Binding Type, Mode=OneWay}"/>
+                                                    <Run Text="{Binding Interviewer, Mode=OneWay, StringFormat=' · {0}'}"/>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding LocationOrLink}" Style="{StaticResource SubtleText}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <CheckBox IsChecked="{Binding IsCompleted, Mode=OneWay}" Content="Done"
+                                                          Style="{StaticResource FormCheckBox}"
+                                                          Click="InterviewCompleted_Click" Tag="{Binding}"
+                                                          Margin="0,0,10,0"/>
+                                                <Button Content="Delete" Style="{StaticResource DangerButton}"
+                                                        Click="DeleteInterview_Click" Tag="{Binding}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Add interview row -->
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <DatePicker Grid.Column="0" SelectedDate="{Binding NewInterviewDate}" Width="130" Margin="0,0,8,0"/>
+                            <TextBox Grid.Column="1" Text="{Binding NewInterviewTime}" Width="60" Margin="0,0,8,0"
+                                     Style="{StaticResource FormTextBox}" ToolTip="Time (HH:mm)"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding AllInterviewTypes}"
+                                      SelectedItem="{Binding NewInterviewType}" Width="110" Margin="0,0,8,0"
+                                      Style="{StaticResource FilterCombo}"/>
+                            <TextBox Grid.Column="3" Text="{Binding NewInterviewer, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}" Margin="0,0,8,0" ToolTip="Interviewer (optional)"/>
+                            <TextBox Grid.Column="4" Text="{Binding NewInterviewLink, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBox}" Margin="0,0,8,0" ToolTip="Meeting link or address (optional)"/>
+                            <Button Grid.Column="5" Content="➕ Add" Command="{Binding AddInterviewCommand}"
+                                    Style="{StaticResource SecondaryButton}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
                 <!-- Notes -->
                 <Border Style="{StaticResource FormCard}" Margin="0,16,0,0">
                     <StackPanel>

@@ -60,6 +60,21 @@ public interface IEmailExtractionService
     EmailExtractionResult Extract(string rawEmailText);
 }
 
+public interface IInterviewService
+{
+    /// <summary>Pending interviews from now through the next <paramref name="days"/> days.</summary>
+    Task<IReadOnlyList<InterviewDto>> GetUpcomingAsync(int days = 14);
+
+    /// <summary>All interviews falling inside the given calendar month.</summary>
+    Task<IReadOnlyList<InterviewDto>> GetForMonthAsync(int year, int month);
+
+    Task<IReadOnlyList<InterviewDto>> GetByApplicationAsync(int applicationId);
+    Task<InterviewDto> CreateAsync(CreateInterviewRequest request);
+    Task UpdateAsync(UpdateInterviewRequest request);
+    Task DeleteAsync(int id);
+    Task SetCompletedAsync(int id, bool completed);
+}
+
 /// <summary>One skill from the catalog + whether the user has it ticked for this application.</summary>
 public record SkillMatchInput(string Name, bool Selected);
 

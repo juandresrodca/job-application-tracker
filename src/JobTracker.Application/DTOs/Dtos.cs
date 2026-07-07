@@ -47,6 +47,50 @@ public record UpdateJobApplicationRequest(
     IList<int> SkillIds
 );
 
+public record InterviewDto(
+    int Id,
+    int JobApplicationId,
+    string RoleName,
+    string CompanyName,
+    DateTime ScheduledAt,
+    int DurationMinutes,
+    InterviewType Type,
+    string? Interviewer,
+    string? LocationOrLink,
+    string? Notes,
+    bool IsCompleted)
+{
+    public bool IsToday => ScheduledAt.Date == DateTime.Today;
+    public bool IsTomorrow => ScheduledAt.Date == DateTime.Today.AddDays(1);
+    public int DaysUntil => (ScheduledAt.Date - DateTime.Today).Days;
+
+    /// <summary>"Today 14:30", "Tomorrow 09:00" or "Mon 21 Jul · 14:30".</summary>
+    public string WhenText => IsToday
+        ? $"Today {ScheduledAt:HH:mm}"
+        : IsTomorrow
+            ? $"Tomorrow {ScheduledAt:HH:mm}"
+            : ScheduledAt.ToString("ddd d MMM · HH:mm");
+}
+
+public record CreateInterviewRequest(
+    int JobApplicationId,
+    DateTime ScheduledAt,
+    int DurationMinutes,
+    InterviewType Type,
+    string? Interviewer,
+    string? LocationOrLink,
+    string? Notes);
+
+public record UpdateInterviewRequest(
+    int Id,
+    DateTime ScheduledAt,
+    int DurationMinutes,
+    InterviewType Type,
+    string? Interviewer,
+    string? LocationOrLink,
+    string? Notes,
+    bool IsCompleted);
+
 public record CompanyDto(int Id, string Name, string? Website, string? Industry, string? Location);
 public record ContactDto(int Id, string Name, string? Email, string? LinkedInUrl, string? Role, int? CompanyId);
 public record SkillDto(int Id, string Name, string? Category);

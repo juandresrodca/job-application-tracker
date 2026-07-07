@@ -87,6 +87,10 @@
                             Style="{StaticResource NavButton}"
                             Command="{Binding NavigateCommand}"
                             CommandParameter="Discover"/>
+                    <Button Content="📅  Calendar"
+                            Style="{StaticResource NavButton}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="Calendar"/>
                     <Button Content="⚙️  Settings"
                             Style="{StaticResource NavButton}"
                             Command="{Binding NavigateCommand}"

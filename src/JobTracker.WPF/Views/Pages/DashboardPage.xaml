@@ -9,6 +9,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- Header + Stats -->
             <RowDefinition Height="Auto"/>  <!-- Filters toolbar -->
+            <RowDefinition Height="Auto"/>  <!-- Upcoming interviews strip -->
             <RowDefinition Height="*"/>     <!-- Data grid -->
             <RowDefinition Height="Auto"/>  <!-- Status bar -->
         </Grid.RowDefinitions>
@@ -127,8 +128,65 @@
             </Grid>
         </Border>
 
+        <!-- ── Upcoming interviews ────────────────────────────────────────── -->
+        <Border Grid.Row="2" Style="{StaticResource ToolbarCard}" Margin="0,0,0,16"
+                Visibility="{Binding HasUpcomingInterviews, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel>
+                <TextBlock Text="📅 Upcoming interviews" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
+                <ItemsControl ItemsSource="{Binding UpcomingInterviews}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource CardBrush}"
+                                    BorderBrush="{StaticResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="10,7" Margin="0,0,10,6" MaxWidth="280">
+                                <Border.ToolTip>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Interviewer, StringFormat='Interviewer: {0}'}"/>
+                                        <TextBlock Text="{Binding LocationOrLink}"/>
+                                        <TextBlock Text="{Binding Notes}"/>
+                                    </StackPanel>
+                                </Border.ToolTip>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border CornerRadius="4" Padding="5,1" Margin="0,0,7,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#14A38E"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                            <Setter Property="Background" Value="#E5484D"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsTomorrow}" Value="True">
+                                                            <Setter Property="Background" Value="#E0A100"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding WhenText}" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Type}" Style="{StaticResource SubtleText}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Margin="0,4,0,0" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding RoleName, Mode=OneWay}" FontWeight="SemiBold"/>
+                                        <Run Text=" · "/>
+                                        <Run Text="{Binding CompanyName, Mode=OneWay}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
         <!-- ── Table View ─────────────────────────────────────────────────── -->
-        <DataGrid Grid.Row="2"
+        <DataGrid Grid.Row="3"
                   ItemsSource="{Binding FilteredApplications}"
                   SelectedItem="{Binding SelectedApplication}"
                   Style="{StaticResource MainDataGrid}"
@@ -225,7 +283,7 @@
         </DataGrid>
 
         <!-- ── Kanban Board View ──────────────────────────────────────────── -->
-        <ScrollViewer Grid.Row="2"
+        <ScrollViewer Grid.Row="3"
                       HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Disabled"
                       Visibility="{Binding IsKanbanView, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -291,7 +349,7 @@
         </ScrollViewer>
 
         <!-- ── Status Bar ─────────────────────────────────────────────────── -->
-        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" Padding="8,4" Margin="0,8,0,0">
+        <Border Grid.Row="4" Background="{StaticResource SurfaceBrush}" Padding="8,4" Margin="0,8,0,0">
             <Grid>
                 <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubtleText}"/>
                 <ProgressBar IsIndeterminate="True" Height="3" VerticalAlignment="Bottom"

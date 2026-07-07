@@ -105,6 +105,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<ICompanyRepository,        CompanyRepository>();
         services.AddTransient<IContactRepository,        ContactRepository>();
         services.AddTransient<ISkillRepository,          SkillRepository>();
+        services.AddTransient<IInterviewRepository,      InterviewRepository>();
 
         // ── Application Services ──────────────────────────────────────────
         services.AddSingleton<ISettingsService,    SettingsService>();
@@ -114,6 +115,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IMatchScoreService,  MatchScoreService>();
         services.AddSingleton<IJobDiscoveryService, GreenhouseDiscoveryService>();
         services.AddTransient<IJobApplicationService, JobApplicationService>();
+        services.AddTransient<IInterviewService,   InterviewService>();
 
         // ── WPF Services ──────────────────────────────────────────────────
         services.AddSingleton<IDialogService, WpfDialogService>();
@@ -127,6 +129,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<ContactsViewModel>();
         services.AddTransient<SkillsViewModel>();
         services.AddTransient<DiscoverViewModel>();
+        services.AddTransient<CalendarViewModel>();
 
         // ── WPF Pages ─────────────────────────────────────────────────────
         services.AddTransient<DashboardPage>();
@@ -136,6 +139,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<ContactsPage>();
         services.AddTransient<SkillsPage>();
         services.AddTransient<DiscoverPage>();
+        services.AddTransient<CalendarPage>();
     }
 
     private async Task SeedDefaultDataAsync()

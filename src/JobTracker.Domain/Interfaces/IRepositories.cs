@@ -35,3 +35,15 @@ public interface ISkillRepository : IRepository<Skill>
     Task<Skill?> GetByNameAsync(string name);
     Task<IEnumerable<Skill>> GetByApplicationAsync(int applicationId);
 }
+
+public interface IInterviewRepository : IRepository<Interview>
+{
+    /// <summary>Interviews for one application, ordered by date.</summary>
+    Task<IEnumerable<Interview>> GetByApplicationAsync(int applicationId);
+
+    /// <summary>Pending interviews from now up to <paramref name="days"/> days ahead, with application/company loaded.</summary>
+    Task<IEnumerable<Interview>> GetUpcomingAsync(int days);
+
+    /// <summary>All interviews in a date range (calendar month view), with application/company loaded.</summary>
+    Task<IEnumerable<Interview>> GetBetweenAsync(DateTime fromInclusive, DateTime toExclusive);
+}

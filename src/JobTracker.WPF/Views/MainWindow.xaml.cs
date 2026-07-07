@@ -63,6 +63,7 @@ public partial class MainWindow : Window
             "Contacts"       => CreatePage<ContactsPage>(),
             "Skills"         => CreatePage<SkillsPage>(),
             "Discover"       => CreatePage<DiscoverPage>(),
+            "Calendar"       => CreatePage<CalendarPage>(),
             "Settings"       => CreatePage<SettingsPage>(),
             _                => CreatePage<DashboardPage>()
         };

@@ -1,0 +1,113 @@
+<Page x:Class="JobTracker.WPF.Views.Pages.CalendarPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Calendar"
+      Background="{StaticResource BackgroundBrush}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Header -->
+            <RowDefinition Height="Auto"/>  <!-- Weekday headers -->
+            <RowDefinition Height="*"/>     <!-- Month grid -->
+            <RowDefinition Height="Auto"/>  <!-- Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- ── Header ────────────────────────────────────────────────────── -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{Binding MonthTitle}" Style="{StaticResource PageTitleText}"/>
+                <TextBlock Text="Interview schedule" Style="{StaticResource SubtleText}" Margin="0,4,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="◀" Command="{Binding PreviousMonthCommand}"
+                        Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="12,6"/>
+                <Button Content="Today" Command="{Binding TodayCommand}"
+                        Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                <Button Content="▶" Command="{Binding NextMonthCommand}"
+                        Style="{StaticResource SecondaryButton}" Padding="12,6"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ── Weekday headers ───────────────────────────────────────────── -->
+        <UniformGrid Grid.Row="1" Columns="7" Margin="0,0,0,4">
+            <TextBlock Text="Mon" Style="{StaticResource SubtleText}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Tue" Style="{StaticResource SubtleText}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Wed" Style="{StaticResource SubtleText}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Thu" Style="{StaticResource SubtleText}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Fri" Style="{StaticResource SubtleText}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Sat" Style="{StaticResource SubtleText}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Sun" Style="{StaticResource SubtleText}" HorizontalAlignment="Center"/>
+        </UniformGrid>
+
+        <!-- ── Month grid ────────────────────────────────────────────────── -->
+        <ItemsControl Grid.Row="2" ItemsSource="{Binding Days}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="7" Rows="6"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="2" CornerRadius="6" Padding="6"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCurrentMonth}" Value="False">
+                                        <Setter Property="Opacity" Value="0.35"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#14A38E"/>
+                                        <Setter Property="BorderThickness" Value="2"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="{Binding DayNumber}"
+                                       Style="{StaticResource SubtleText}" FontWeight="SemiBold"/>
+                            <ItemsControl ItemsSource="{Binding Interviews}" Margin="0,3,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#14A38E" CornerRadius="3"
+                                                Padding="4,1" Margin="0,0,0,2">
+                                            <Border.ToolTip>
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="SemiBold">
+                                                        <Run Text="{Binding RoleName, Mode=OneWay}"/>
+                                                        <Run Text=" at "/>
+                                                        <Run Text="{Binding CompanyName, Mode=OneWay}"/>
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding ScheduledAt, StringFormat='{}{0:ddd d MMM · HH:mm}'}"/>
+                                                    <TextBlock Text="{Binding Type, StringFormat='Type: {0}'}"/>
+                                                    <TextBlock Text="{Binding Interviewer, StringFormat='Interviewer: {0}'}"/>
+                                                    <TextBlock Text="{Binding LocationOrLink}"/>
+                                                </StackPanel>
+                                            </Border.ToolTip>
+                                            <TextBlock Foreground="White" FontSize="10.5" TextTrimming="CharacterEllipsis">
+                                                <Run Text="{Binding ScheduledAt, Mode=OneWay, StringFormat='{}{0:HH:mm}'}" FontWeight="SemiBold"/>
+                                                <Run Text=" "/>
+                                                <Run Text="{Binding CompanyName, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- ── Status bar ────────────────────────────────────────────────── -->
+        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" Padding="8,4" Margin="0,8,0,0">
+            <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubtleText}"/>
+        </Border>
+    </Grid>
+</Page>
