@@ -19,6 +19,7 @@ public class ApplicationFormViewModel : ViewModelBase
     private readonly IPdfExtractionService _pdfExtraction;
     private readonly IEmailExtractionService _emailExtraction;
     private readonly IMatchScoreService _matchScore;
+    private readonly IInterviewService _interviewService;
     private readonly IDialogService _dialogService;
 
     private int? _editingId;
@@ -141,6 +142,81 @@ public class ApplicationFormViewModel : ViewModelBase
     public ObservableCollection<SkillSelectionItem> Skills { get; } = new();
     public IEnumerable<ApplicationStatus> AllStatuses => Enum.GetValues<ApplicationStatus>();
 
+    // ── Interviews (edit mode only — the application must exist first) ──────
+    public ObservableCollection<InterviewDto> Interviews { get; } = new();
+    public IEnumerable<InterviewType> AllInterviewTypes => Enum.GetValues<InterviewType>();
+
+    private DateTime _newInterviewDate = DateTime.Today.AddDays(1);
+    public DateTime NewInterviewDate { get => _newInterviewDate; set => SetField(ref _newInterviewDate, value); }
+
+    private string _newInterviewTime = "10:00";
+    public string NewInterviewTime { get => _newInterviewTime; set => SetField(ref _newInterviewTime, value); }
+
+    private InterviewType _newInterviewType = InterviewType.Video;
+    public InterviewType NewInterviewType { get => _newInterviewType; set => SetField(ref _newInterviewType, value); }
+
+    private string _newInterviewer = string.Empty;
+    public string NewInterviewer { get => _newInterviewer; set => SetField(ref _newInterviewer, value); }
+
+    private string _newInterviewLink = string.Empty;
+    public string NewInterviewLink { get => _newInterviewLink; set => SetField(ref _newInterviewLink, value); }
+
+    public AsyncRelayCommand AddInterviewCommand { get; private set; } = null!;
+
+    private async Task AddInterviewAsync()
+    {
+        if (_editingId is null) return;
+
+        if (!TimeSpan.TryParse(NewInterviewTime, out var time))
+        {
+            _dialogService.Alert("Invalid time", "Enter the time as HH:mm, e.g. 14:30.");
+            return;
+        }
+
+        try
+        {
+            await _interviewService.CreateAsync(new CreateInterviewRequest(
+                _editingId.Value,
+                NewInterviewDate.Date + time,
+                60,
+                NewInterviewType,
+                NewInterviewer,
+                NewInterviewLink,
+                null));
+
+            NewInterviewer = string.Empty;
+            NewInterviewLink = string.Empty;
+            await ReloadInterviewsAsync();
+        }
+        catch (Exception ex)
+        {
+            _dialogService.Alert("Error", $"Could not add the interview: {ex.Message}");
+        }
+    }
+
+    public async Task DeleteInterviewAsync(InterviewDto interview)
+    {
+        if (!_dialogService.Confirm("Delete Interview",
+                $"Delete the {interview.Type} interview on {interview.WhenText}?")) return;
+
+        await _interviewService.DeleteAsync(interview.Id);
+        await ReloadInterviewsAsync();
+    }
+
+    public async Task ToggleInterviewCompletedAsync(InterviewDto interview)
+    {
+        await _interviewService.SetCompletedAsync(interview.Id, !interview.IsCompleted);
+        await ReloadInterviewsAsync();
+    }
+
+    private async Task ReloadInterviewsAsync()
+    {
+        if (_editingId is null) return;
+        var list = await _interviewService.GetByApplicationAsync(_editingId.Value);
+        Interviews.Clear();
+        foreach (var i in list) Interviews.Add(i);
+    }
+
     // ── Validation ─────────────────────────────────────────────────────────
     public bool HasRoleNameError => string.IsNullOrWhiteSpace(RoleName);
     public bool HasCompanyError => SelectedCompany is null;
@@ -175,6 +251,7 @@ public class ApplicationFormViewModel : ViewModelBase
         IPdfExtractionService pdfExtraction,
         IEmailExtractionService emailExtraction,
         IMatchScoreService matchScore,
+        IInterviewService interviewService,
         IDialogService dialogService)
     {
         _appService = appService;
@@ -185,6 +262,7 @@ public class ApplicationFormViewModel : ViewModelBase
         _pdfExtraction = pdfExtraction;
         _emailExtraction = emailExtraction;
         _matchScore = matchScore;
+        _interviewService = interviewService;
         _dialogService = dialogService;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !string.IsNullOrWhiteSpace(RoleName) && SelectedCompany is not null);
@@ -210,6 +288,7 @@ public class ApplicationFormViewModel : ViewModelBase
             NewContactEmail = string.Empty;
             NewContactRole = string.Empty;
         });
+        AddInterviewCommand = new AsyncRelayCommand(AddInterviewAsync);
         ShowEmailImportCommand = new RelayCommand(() => IsImportingFromEmail = true);
         ExtractFromEmailCommand = new AsyncRelayCommand(ExtractFromEmailAsync, () => !string.IsNullOrWhiteSpace(EmailText));
         CancelEmailImportCommand = new RelayCommand(() =>
@@ -242,6 +321,8 @@ public class ApplicationFormViewModel : ViewModelBase
 
         foreach (var skill in Skills)
             skill.IsSelected = app.Skills.Contains(skill.Name);
+
+        await ReloadInterviewsAsync();
     }
 
     public async Task InitializeForCreateAsync()

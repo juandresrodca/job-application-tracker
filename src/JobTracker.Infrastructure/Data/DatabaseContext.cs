@@ -86,9 +86,25 @@ public class DatabaseContext
             """);
 
         await ExecuteAsync(conn, """
+            CREATE TABLE IF NOT EXISTS Interviews (
+                Id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                JobApplicationId INTEGER NOT NULL REFERENCES JobApplications(Id) ON DELETE CASCADE,
+                ScheduledAt     TEXT NOT NULL,
+                DurationMinutes INTEGER NOT NULL DEFAULT 60,
+                Type            INTEGER NOT NULL DEFAULT 0,
+                Interviewer     TEXT,
+                LocationOrLink  TEXT,
+                Notes           TEXT,
+                IsCompleted     INTEGER NOT NULL DEFAULT 0
+            );
+            """);
+
+        await ExecuteAsync(conn, """
             CREATE INDEX IF NOT EXISTS idx_applications_date ON JobApplications(AppliedDate);
             CREATE INDEX IF NOT EXISTS idx_applications_status ON JobApplications(Status);
             CREATE INDEX IF NOT EXISTS idx_applications_company ON JobApplications(CompanyId);
+            CREATE INDEX IF NOT EXISTS idx_interviews_date ON Interviews(ScheduledAt);
+            CREATE INDEX IF NOT EXISTS idx_interviews_application ON Interviews(JobApplicationId);
             """);
     }
 

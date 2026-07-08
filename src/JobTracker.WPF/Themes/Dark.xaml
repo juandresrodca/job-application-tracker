@@ -23,15 +23,15 @@
     <SolidColorBrush x:Key="StatusRejected"    Color="#F85149"/>
     <SolidColorBrush x:Key="StatusWithdrawn"   Color="#484F58"/>
 
-    <!-- ── Light Theme Colors for Form Controls ───────────────────────── -->
-    <SolidColorBrush x:Key="FormBackground"    Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="FormText"          Color="#000000"/>
-    <SolidColorBrush x:Key="FormBorder"        Color="#CCCCCC"/>
-    <SolidColorBrush x:Key="FormFocusBorder"   Color="#4A90E2"/>
-    <SolidColorBrush x:Key="FormCaretBrush"    Color="#4A90E2"/>
-    <SolidColorBrush x:Key="ComboHoverBg"      Color="#E3F2FD"/>
-    <SolidColorBrush x:Key="ComboSelectedBg"   Color="#BBDEFB"/>
-    <SolidColorBrush x:Key="FieldLabelText"    Color="#B0B0B0"/>
+    <!-- ── Form control colors (dark, consistent with the page palette) ── -->
+    <SolidColorBrush x:Key="FormBackground"    Color="#0D1117"/>
+    <SolidColorBrush x:Key="FormText"          Color="#E6EDF3"/>
+    <SolidColorBrush x:Key="FormBorder"        Color="#30363D"/>
+    <SolidColorBrush x:Key="FormFocusBorder"   Color="#3FB950"/>
+    <SolidColorBrush x:Key="FormCaretBrush"    Color="#3FB950"/>
+    <SolidColorBrush x:Key="ComboHoverBg"      Color="#2D333B"/>
+    <SolidColorBrush x:Key="ComboSelectedBg"   Color="#1F3D2B"/>
+    <SolidColorBrush x:Key="FieldLabelText"    Color="#8B949E"/>
 
     <!-- ── Text Styles ───────────────────────────────────────────────────── -->
     <Style x:Key="PageTitleText" TargetType="TextBlock">
@@ -304,20 +304,21 @@
         <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}"/>
     </Style>
 
-    <!-- ── Form Controls ─────────────────────────────────────────────────── -->
-    <Style x:Key="FormTextBox" TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource FormBackground}"/>
-        <Setter Property="Foreground" Value="{StaticResource FormText}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource FormBorder}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,6"/>
+    <!-- ── Form Controls ──────────────────────────────────────────────────
+         Based on MaterialDesign's outlined dark styles (already bundled with a
+         green primary that matches the app accent) — modern rounded outlines,
+         proper dark dropdown/calendar popups, animated focus states. ──────── -->
+    <Style x:Key="FormTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
         <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="materialDesign:TextFieldAssist.TextFieldCornerRadius" Value="6"/>
         <Setter Property="CaretBrush" Value="{StaticResource FormCaretBrush}"/>
-        <Style.Triggers>
-            <Trigger Property="IsFocused" Value="True">
-                <Setter Property="BorderBrush" Value="{StaticResource FormFocusBorder}"/>
-            </Trigger>
-        </Style.Triggers>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <!-- Pin light text + visible hint/outline so contrast never depends on MD theme resolution -->
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource FormBorder}"/>
+        <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource TextSecondary}"/>
+        <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{StaticResource FormBorder}"/>
     </Style>
 
     <Style x:Key="MultiLineTextBox" TargetType="TextBox" BasedOn="{StaticResource FormTextBox}">
@@ -325,64 +326,109 @@
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
         <Setter Property="VerticalContentAlignment" Value="Top"/>
-        <Setter Property="Background" Value="{StaticResource FormBackground}"/>
-        <Setter Property="Foreground" Value="{StaticResource FormText}"/>
     </Style>
 
     <Style x:Key="SearchBox" TargetType="TextBox" BasedOn="{StaticResource FormTextBox}">
-        <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Foreground" Value="{StaticResource FormText}"/>
-        <Setter Property="Background" Value="{StaticResource FormBackground}"/>
-        <Setter Property="CaretBrush" Value="{StaticResource FormCaretBrush}"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="materialDesign:HintAssist.Hint" Value="Search…"/>
+        <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="True"/>
     </Style>
 
-    <Style x:Key="FormComboItem" TargetType="ComboBoxItem">
-        <Setter Property="Foreground" Value="{StaticResource FormText}"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Padding" Value="8,8"/>
-        <Setter Property="FontWeight" Value="Normal"/>
-        <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource ComboHoverBg}"/>
-            </Trigger>
-            <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{StaticResource ComboSelectedBg}"/>
-                <Setter Property="Foreground" Value="{StaticResource FormText}"/>
-                <Setter Property="FontWeight" Value="Bold"/>
-            </Trigger>
-        </Style.Triggers>
-    </Style>
-
-    <Style x:Key="FormCombo" TargetType="ComboBox">
-        <Setter Property="Background" Value="{StaticResource FormBackground}"/>
-        <Setter Property="Foreground" Value="{StaticResource FormText}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource FormBorder}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,6"/>
+    <Style x:Key="FormCombo" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Padding" Value="10,8"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="ItemContainerStyle" Value="{StaticResource FormComboItem}"/>
-        <Setter Property="MaxDropDownHeight" Value="200"/>
+        <Setter Property="MaxDropDownHeight" Value="240"/>
+        <!-- Pin light text + visible hint so the selected value and placeholder always read -->
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource FormBorder}"/>
+        <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource TextSecondary}"/>
     </Style>
 
     <Style x:Key="FilterCombo" TargetType="ComboBox" BasedOn="{StaticResource FormCombo}">
-        <Setter Property="Padding" Value="8,5"/>
-        <Setter Property="MaxDropDownHeight" Value="200"/>
+        <Setter Property="Padding" Value="10,6"/>
     </Style>
 
+    <!-- Make the editable date text readable on dark (MaterialDesign's rendered near-invisible). -->
+    <Style TargetType="DatePickerTextBox">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Fully custom dark DatePicker: visible text + an accent calendar button that opens
+         the standard (readable) calendar popup for picking a valid date. -->
     <Style x:Key="FormDatePicker" TargetType="DatePicker">
-        <Setter Property="Background" Value="{StaticResource FormBackground}"/>
-        <Setter Property="Foreground" Value="{StaticResource FormText}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource FormBorder}"/>
         <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Background" Value="{StaticResource FormBackground}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource FormBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Read-only: the date can only be chosen from the calendar popup,
+                                 so free-typed / malformed values are impossible. -->
+                            <DatePickerTextBox x:Name="PART_TextBox" Grid.Column="0"
+                                               Padding="10,0" VerticalContentAlignment="Center"
+                                               Background="Transparent" BorderThickness="0"
+                                               IsReadOnly="True" IsTabStop="False"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+
+                            <Button x:Name="PART_Button" Grid.Column="1" Width="38"
+                                    Focusable="False" Cursor="Hand"
+                                    Background="Transparent" BorderThickness="0"
+                                    ToolTip="Pick a date">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="IconBd" Background="Transparent" CornerRadius="6">
+                                            <!-- Monochrome icon font honours Foreground, so it stays visible on dark -->
+                                            <TextBlock x:Name="Icon" Text="&#xE787;"
+                                                       FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                                       Foreground="{StaticResource AccentBrush}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="IconBd" Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                                                <Setter TargetName="Icon" Property="Foreground" Value="{StaticResource AccentHoverBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <Popup x:Name="PART_Popup" StaysOpen="False"
+                                   AllowsTransparency="True"
+                                   PlacementTarget="{Binding ElementName=PART_TextBox}"
+                                   Placement="Bottom"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter Property="BorderBrush" Value="{StaticResource FormFocusBorder}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
-    <Style x:Key="FormCheckBox" TargetType="CheckBox">
-        <Setter Property="Foreground" Value="#FFFFFF"/>
+    <Style x:Key="FormCheckBox" TargetType="CheckBox" BasedOn="{StaticResource MaterialDesignCheckBox}">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="FontWeight" Value="Normal"/>
     </Style>
 
     <Style x:Key="FormPasswordBox" TargetType="PasswordBox">
@@ -395,6 +441,19 @@
     </Style>
 
     <!-- ── DataGrid ───────────────────────────────────────────────────────── -->
+    <!-- Keyed so pages can derive from it (e.g. to attach a row context menu) without
+         losing the hover/selected visuals. -->
+    <Style x:Key="MainDataGridRowStyle" TargetType="DataGridRow">
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#1A3024"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#1E3A2C"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="MainDataGrid" TargetType="DataGrid">
         <Setter Property="Background" Value="{StaticResource CardBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
@@ -406,20 +465,7 @@
         <Setter Property="ColumnHeaderHeight" Value="36"/>
         <Setter Property="RowHeight" Value="44"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="RowStyle">
-            <Setter.Value>
-                <Style TargetType="DataGridRow">
-                    <Style.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#1A3024"/>
-                        </Trigger>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="#1E3A2C"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="RowStyle" Value="{StaticResource MainDataGridRowStyle}"/>
     </Style>
 
     <Style x:Key="DataGridColumnHeaderStyle" TargetType="DataGridColumnHeader">

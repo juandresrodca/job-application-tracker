@@ -35,6 +35,99 @@ public class DiscoverViewModel : ViewModelBase
     /// <summary>Raised when the user wants to track a discovered job as a new application.</summary>
     public event Action<DiscoveredJobVm>? TrackRequested;
 
+    // ── Browser co-pilot mode ────────────────────────────────────────────────
+    private bool _isBrowserMode;
+    public bool IsBrowserMode
+    {
+        get => _isBrowserMode;
+        set { SetField(ref _isBrowserMode, value); OnPropertyChanged(nameof(IsBoardsMode)); }
+    }
+    public bool IsBoardsMode => !IsBrowserMode;
+
+    public record SitePreset(string Name, string Url)
+    {
+        public override string ToString() => Name;
+    }
+
+    public IReadOnlyList<SitePreset> SitePresets { get; } = new[]
+    {
+        new SitePreset("Indeed (IE)", "https://ie.indeed.com/"),
+        new SitePreset("IrishJobs", "https://www.irishjobs.ie/"),
+        new SitePreset("Jobs.ie", "https://www.jobs.ie/"),
+        new SitePreset("LinkedIn Jobs", "https://www.linkedin.com/jobs/"),
+    };
+
+    private SitePreset? _selectedSite;
+    public SitePreset? SelectedSite
+    {
+        get => _selectedSite;
+        set
+        {
+            SetField(ref _selectedSite, value);
+            if (value is not null) { CurrentUrl = value.Url; NavigateRequested?.Invoke(value.Url); }
+        }
+    }
+
+    private string _currentUrl = string.Empty;
+    public string CurrentUrl { get => _currentUrl; set => SetField(ref _currentUrl, value); }
+
+    /// <summary>The view hosts the WebView2 control; it navigates when this fires.</summary>
+    public event Action<string>? NavigateRequested;
+
+    public void RequestNavigate() => NavigateRequested?.Invoke(CurrentUrl);
+
+    // ── Scanned page state ───────────────────────────────────────────────────
+    private string? _scannedTitle;
+    public string? ScannedTitle { get => _scannedTitle; private set => SetField(ref _scannedTitle, value); }
+
+    private string? _scannedCompany;
+    public string? ScannedCompany { get => _scannedCompany; private set => SetField(ref _scannedCompany, value); }
+
+    private string? _scannedDescription;
+    private string? _scannedUrl;
+
+    private bool _hasScan;
+    public bool HasScan { get => _hasScan; private set => SetField(ref _hasScan, value); }
+
+    private string _scanMatchText = string.Empty;
+    public string ScanMatchText { get => _scanMatchText; private set => SetField(ref _scanMatchText, value); }
+
+    /// <summary>Skills mentioned on the scanned page — used for in-page highlighting.</summary>
+    public IReadOnlyList<string> ScannedSkills { get; private set; } = Array.Empty<string>();
+
+    private string _copilotStatus = "Pick a job site, open a job posting, then press Scan page.";
+    public string CopilotStatus { get => _copilotStatus; set => SetField(ref _copilotStatus, value); }
+
+    /// <summary>Called by the view after extracting the page (JSON-LD JobPosting or body text).</summary>
+    public async Task ApplyScanAsync(string? title, string? company, string? description, string url)
+    {
+        _scannedDescription = description;
+        _scannedUrl = url;
+        ScannedTitle = string.IsNullOrWhiteSpace(title) ? "(no title detected)" : title.Trim();
+        ScannedCompany = string.IsNullOrWhiteSpace(company) ? null : company.Trim();
+
+        var skills = (await _skillRepo.GetAllAsync())
+            .Select(s => new SkillMatchInput(s.Name, Selected: true))
+            .ToList();
+        var match = _matchScore.Compute(description, skills);
+
+        ScannedSkills = match.MatchedSkills;
+        ScanMatchText = match.HasDetections
+            ? $"{match.MatchedSkills.Count} of your skills mentioned: {string.Join(", ", match.MatchedSkills)}"
+            : "No catalog skills detected in this posting.";
+
+        HasScan = true;
+        CopilotStatus = "Scanned. Highlight your skills on the page, or track this job.";
+    }
+
+    public void TrackScanned()
+    {
+        if (!HasScan) return;
+        var dto = new DiscoveredJobDto(0, ScannedTitle ?? "Unknown role", null,
+            _scannedUrl ?? CurrentUrl, _scannedDescription, null);
+        TrackRequested?.Invoke(new DiscoveredJobVm(dto, ScannedSkills));
+    }
+
     public DiscoverViewModel(
         IJobDiscoveryService discovery,
         ISkillRepository skillRepo,
