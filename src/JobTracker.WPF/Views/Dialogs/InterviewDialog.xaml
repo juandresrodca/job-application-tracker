@@ -1,0 +1,43 @@
+<Window x:Class="JobTracker.WPF.Views.Dialogs.InterviewDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Interview"
+        SizeToContent="Height" Width="360"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Border Padding="20">
+        <StackPanel>
+            <TextBlock x:Name="HeaderText" Text="Set interview date"
+                       Style="{StaticResource PageTitleText}" FontSize="18" Margin="0,0,0,4"/>
+            <TextBlock x:Name="SubHeaderText" Style="{StaticResource SubtleText}" Margin="0,0,0,18"
+                       TextWrapping="Wrap"/>
+
+            <TextBlock Text="Date" Style="{StaticResource FieldLabel}"/>
+            <DatePicker x:Name="DatePick" Style="{StaticResource FormDatePicker}" Margin="0,0,0,14"/>
+
+            <TextBlock Text="Time (24h)" Style="{StaticResource FieldLabel}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <ComboBox x:Name="HourCombo" Style="{StaticResource FormCombo}" Width="92"/>
+                <TextBlock Text=":" VerticalAlignment="Center" Margin="8,0" FontSize="16"
+                           FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <ComboBox x:Name="MinuteCombo" Style="{StaticResource FormCombo}" Width="92"/>
+            </StackPanel>
+
+            <TextBlock Text="Type" Style="{StaticResource FieldLabel}"/>
+            <ComboBox x:Name="TypeCombo" Style="{StaticResource FormCombo}" Margin="0,0,0,6"/>
+
+            <TextBlock x:Name="ErrorText" Foreground="{StaticResource DangerBrush}"
+                       FontSize="12" Margin="0,4,0,0" Visibility="Collapsed" TextWrapping="Wrap"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                <Button Content="Cancel" IsCancel="True" Click="Cancel_Click"
+                        Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                <Button x:Name="SaveButton" Content="Save" IsDefault="True" Click="Save_Click"
+                        Style="{StaticResource PrimaryButton}"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

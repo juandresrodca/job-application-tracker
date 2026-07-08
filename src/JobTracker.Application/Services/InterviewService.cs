@@ -44,6 +44,13 @@ public class InterviewService : IInterviewService
             .ToList();
     }
 
+    public async Task<IReadOnlyList<InterviewDto>> GetAllAsync()
+    {
+        // Repo GetAllAsync loads the owning application + company, so MapToDto resolves names.
+        var interviews = await _repo.GetAllAsync();
+        return interviews.Select(MapToDto).ToList();
+    }
+
     public async Task<InterviewDto> CreateAsync(CreateInterviewRequest request)
     {
         if (request.ScheduledAt == default)

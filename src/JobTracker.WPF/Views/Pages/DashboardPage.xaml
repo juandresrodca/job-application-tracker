@@ -5,6 +5,25 @@
       Title="Dashboard"
       Background="{StaticResource BackgroundBrush}">
 
+    <Page.Resources>
+        <!-- Right-click interview menu. Rule 1: no interview yet → a single "set first"
+             option. Rule 2: one already exists → "new instance" + "modify date". Visibility
+             is driven by the row's InterviewCount so the two states never overlap. -->
+        <ContextMenu x:Key="RowContextMenu">
+            <MenuItem Header="📅 Set first interview" Click="SetInterview_Click"
+                      Visibility="{Binding InterviewCount, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=zero}"/>
+            <MenuItem Header="➕ Set new interview" Click="SetInterview_Click"
+                      Visibility="{Binding InterviewCount, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=positive}"/>
+            <MenuItem Header="✏️ Modify interview date" Click="ModifyInterview_Click"
+                      Visibility="{Binding InterviewCount, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=positive}"/>
+        </ContextMenu>
+
+        <Style x:Key="RowWithInterviewMenu" TargetType="DataGridRow"
+               BasedOn="{StaticResource MainDataGridRowStyle}">
+            <Setter Property="ContextMenu" Value="{StaticResource RowContextMenu}"/>
+        </Style>
+    </Page.Resources>
+
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- Header + Stats -->
@@ -194,6 +213,7 @@
                   AutoGenerateColumns="False" IsReadOnly="True"
                   CanUserResizeColumns="False" CanUserResizeRows="False"
                   SelectionMode="Single" GridLinesVisibility="Horizontal"
+                  RowStyle="{StaticResource RowWithInterviewMenu}"
                   Visibility="{Binding IsKanbanView, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}">
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="Role" Width="*" MinWidth="120">
@@ -321,7 +341,8 @@
                                                 <Border Background="{StaticResource CardBrush}"
                                                         BorderBrush="{StaticResource BorderBrush}"
                                                         BorderThickness="1" CornerRadius="6"
-                                                        Padding="10,8" Margin="0,0,0,8">
+                                                        Padding="10,8" Margin="0,0,0,8"
+                                                        ContextMenu="{StaticResource RowContextMenu}">
                                                     <StackPanel>
                                                         <TextBlock Text="{Binding RoleName}"
                                                                    Style="{StaticResource TitleText}"

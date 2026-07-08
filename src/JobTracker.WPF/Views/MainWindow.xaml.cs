@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using JobTracker.Application.Interfaces;
@@ -9,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace JobTracker.WPF;
 
-public partial class MainWindow : Window
+public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly IServiceProvider _services;
 
@@ -17,15 +19,19 @@ public partial class MainWindow : Window
     public string WeekInfo
     {
         get => _weekInfo;
-        set { _weekInfo = value; }
+        set { _weekInfo = value; OnPropertyChanged(); }
     }
 
     private string _weekStats = string.Empty;
     public string WeekStats
     {
         get => _weekStats;
-        set { _weekStats = value; }
+        set { _weekStats = value; OnPropertyChanged(); }
     }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
     public ICommand NavigateCommand { get; }
     public ICommand RefreshCommand { get; }
@@ -45,11 +51,36 @@ public partial class MainWindow : Window
         RefreshCommand = new RelayCommand(async () => await RefreshAsync());
         HelpCommand = new RelayCommand(ShowHelp);
 
+        // Match the OS title bar to the dark app chrome (Win10 20H1+/Win11)
+        SourceInitialized += (_, _) => TryEnableDarkTitleBar();
+
         Loaded += async (_, _) =>
         {
             Navigate("Dashboard");
             await UpdateWeekStatsAsync();
         };
+    }
+
+    // ── Dark window chrome ───────────────────────────────────────────────────
+    [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    private void TryEnableDarkTitleBar()
+    {
+        try
+        {
+            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero) return;
+
+            int useDark = 1;
+            // 20 = DWMWA_USE_IMMERSIVE_DARK_MODE (19 on early Win10 20H1 builds)
+            if (DwmSetWindowAttribute(hwnd, 20, ref useDark, sizeof(int)) != 0)
+                DwmSetWindowAttribute(hwnd, 19, ref useDark, sizeof(int));
+        }
+        catch
+        {
+            // Cosmetic only — a light title bar is not worth crashing over.
+        }
     }
 
     private void Navigate(object? parameter)

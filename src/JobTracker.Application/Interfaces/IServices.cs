@@ -69,6 +69,10 @@ public interface IInterviewService
     Task<IReadOnlyList<InterviewDto>> GetForMonthAsync(int year, int month);
 
     Task<IReadOnlyList<InterviewDto>> GetByApplicationAsync(int applicationId);
+
+    /// <summary>Every interview, with role/company resolved — used to enrich the dashboard rows.</summary>
+    Task<IReadOnlyList<InterviewDto>> GetAllAsync();
+
     Task<InterviewDto> CreateAsync(CreateInterviewRequest request);
     Task UpdateAsync(UpdateInterviewRequest request);
     Task DeleteAsync(int id);

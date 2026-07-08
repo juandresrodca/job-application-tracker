@@ -220,9 +220,15 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
                 ? (await _appService.GetCurrentWeekApplicationsAsync()).ToList()
                 : (await _appService.GetAllApplicationsAsync()).ToList();
 
+            // Enrich each row with its interview summary so the right-click menu can decide
+            // between "set first interview" and "new / modify" — one query, grouped in memory.
+            var interviewsByApp = (await _interviewService.GetAllAsync())
+                .GroupBy(i => i.JobApplicationId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
             Applications.Clear();
             foreach (var app in source)
-                Applications.Add(app);
+                Applications.Add(EnrichWithInterviews(app, interviewsByApp));
 
             // Compute stats over the active source
             TotalApplications = source.Count;
@@ -266,6 +272,56 @@ public class DashboardViewModel : ViewModelBase, IRefreshable
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>
+    /// Returns a copy of the row carrying its interview count and the interview to modify —
+    /// the soonest upcoming one, or the most recent if all are in the past.
+    /// </summary>
+    private static JobApplicationDto EnrichWithInterviews(
+        JobApplicationDto app, IReadOnlyDictionary<int, List<InterviewDto>> byApp)
+    {
+        if (!byApp.TryGetValue(app.Id, out var list) || list.Count == 0)
+            return app;
+
+        var target = list.Where(i => i.ScheduledAt >= DateTime.Now)
+                         .OrderBy(i => i.ScheduledAt)
+                         .FirstOrDefault()
+                     ?? list.OrderByDescending(i => i.ScheduledAt).First();
+
+        return app with
+        {
+            InterviewCount = list.Count,
+            NextInterviewId = target.Id,
+            NextInterviewAt = target.ScheduledAt,
+        };
+    }
+
+    // ── Interview scheduling (right-click on a row) ──────────────────────────
+
+    /// <summary>Adds a new interview to an application and refreshes the board + calendar data.</summary>
+    public async Task CreateInterviewAsync(int applicationId, DateTime scheduledAt, InterviewType type)
+    {
+        await _interviewService.CreateAsync(new CreateInterviewRequest(
+            applicationId, scheduledAt, DurationMinutes: 60, type,
+            Interviewer: null, LocationOrLink: null, Notes: null));
+        StatusMessage = $"Interview scheduled for {scheduledAt:ddd d MMM · HH:mm}";
+        await LoadDataAsync();
+    }
+
+    /// <summary>Reschedules an existing interview (keeps its other details) and refreshes.</summary>
+    public async Task UpdateInterviewDateAsync(int interviewId, DateTime scheduledAt, InterviewType type)
+    {
+        // Preserve the interview's existing fields; only the date/time and type change here.
+        var existing = (await _interviewService.GetAllAsync())
+            .FirstOrDefault(i => i.Id == interviewId);
+
+        await _interviewService.UpdateAsync(new UpdateInterviewRequest(
+            interviewId, scheduledAt, existing?.DurationMinutes ?? 60, type,
+            existing?.Interviewer, existing?.LocationOrLink, existing?.Notes,
+            existing?.IsCompleted ?? false));
+        StatusMessage = $"Interview moved to {scheduledAt:ddd d MMM · HH:mm}";
+        await LoadDataAsync();
     }
 
     private void ApplyFilters()

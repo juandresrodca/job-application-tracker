@@ -114,6 +114,26 @@ public class DaysToUrgencyConverter : IValueConverter
         => throw new NotImplementedException();
 }
 
+/// <summary>
+/// Shows an element based on a count. parameter "zero" → visible only when count == 0
+/// (e.g. the "Set first interview" item); parameter "positive" → visible when count &gt; 0
+/// (the "new instance" / "modify" items). Keeps the right-click menu's two rules in sync.
+/// </summary>
+[ValueConversion(typeof(int), typeof(Visibility))]
+public class CountToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        int count = value is int i ? i : 0;
+        bool wantZero = parameter?.ToString()?.ToLowerInvariant() == "zero";
+        bool show = wantZero ? count == 0 : count > 0;
+        return show ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotImplementedException();
+}
+
 [ValueConversion(typeof(bool), typeof(string))]
 public class BoolToStringConverter : IValueConverter
 {

@@ -21,6 +21,7 @@
             <converters:DaysToUrgencyConverter           x:Key="DaysToUrgencyConverter"/>
             <converters:BoolToBrushConverter             x:Key="BoolToBrushConverter"/>
             <converters:BoolToStringConverter            x:Key="BoolToStringConverter"/>
+            <converters:CountToVisibilityConverter       x:Key="CountToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

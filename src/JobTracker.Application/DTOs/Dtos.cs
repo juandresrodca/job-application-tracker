@@ -16,8 +16,16 @@ public record JobApplicationDto(
     bool IsRemote,
     string? SalaryRange,
     int DaysSinceLastActivity = 0,
-    bool NeedsFollowUp = false
-);
+    bool NeedsFollowUp = false,
+    // Interview summary — enriched by the dashboard so the right-click menu knows
+    // whether an interview already exists and which one to modify.
+    int InterviewCount = 0,
+    int? NextInterviewId = null,
+    DateTime? NextInterviewAt = null
+)
+{
+    public bool HasInterview => InterviewCount > 0;
+}
 
 public record CreateJobApplicationRequest(
     string RoleName,
